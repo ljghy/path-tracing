@@ -1,0 +1,32 @@
+{
+    "width": 1080,
+    "height": 720,
+    "SSP": 32,
+    "camera": {
+        "pos": [
+            4,
+            0,
+            0
+        ],
+        "dir": [
+            -1,
+            0,
+            0
+        ],
+        "up": [
+            0,
+            0,
+            1
+        ],
+        "fov": 60
+    },
+    "shader": {
+        "type": "path_tracing",
+        "max_depth": 4
+    },
+    "output": {
+        "path": "result.png",
+        "scale": 1.0,
+        "gamma": true
+    }
+}

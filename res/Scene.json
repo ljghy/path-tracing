@@ -1,0 +1,60 @@
+{
+    "obj_list": [
+        {
+            "type": "sphere",
+            "center": [
+                0,
+                0,
+                0
+            ],
+            "radius": 1,
+            "mat_index": 1
+        },
+        {
+            "type": "sphere",
+            "center": [
+                0.5,
+                1,
+                -0.5
+            ],
+            "radius": 0.75,
+            "mat_index": 0
+        }
+    ],
+    "mat_list": [
+        {
+            "type": "diffuse",
+            "albedo": [
+                1,
+                1,
+                1
+            ]
+        },
+        {
+            "type": "pbr",
+            "fresnel": [
+                1.00,
+                0.71,
+                0.29
+            ],
+            "albedo": [
+                1.00,
+                0.86,
+                0.57
+            ],
+            "roughness": 0.2,
+            "metallic": 0.95
+        }
+    ],
+    "env_light": {
+        "type": "skybox",
+        "path": [
+            "../res/Skybox/front.jpg",
+            "../res/Skybox/back.jpg",
+            "../res/Skybox/right.jpg",
+            "../res/Skybox/left.jpg",
+            "../res/Skybox/top.jpg",
+            "../res/Skybox/bottom.jpg"
+        ]
+    }
+}
