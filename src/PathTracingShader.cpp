@@ -1,16 +1,4 @@
 #include "path_tracer/shaders/PathTracingShader.h"
-glm::vec3 PathTracingShader::sampleHemisphere(const glm::vec3 &n)
-{
-    float cos_theta = randf(), phi = 2 * PI * randf(), sin_theta = sqrt(1.f - cos_theta * cos_theta);
-    glm::vec3 v(sin_theta * cos(phi), sin_theta * sin(phi), cos_theta);
-    float t = n.z - 1.f;
-    if (ISZERO(t))
-        return v;
-    t = 1.f / t;
-    return glm::vec3((1.f + n.x * n.x * t) * v.x + n.x * n.y * t * v.y + n.x * v.z,
-                     n.x * n.y * t * v.x + (1.f + n.y * n.y * t) * v.y + n.y * v.z,
-                     n.x * v.x + n.y * v.y + n.z * v.z);
-}
 
 glm::vec3 PathTracingShader::shade(Scene *scene, const Ray &ray, int depth)
 {
@@ -23,13 +11,15 @@ glm::vec3 PathTracingShader::shade(Scene *scene, const Ray &ray, int depth)
 
     if (info.happen)
     {
-        if (info.obj->mat != nullptr)
+        auto &m = info.obj->mat;
+        if (m != nullptr)
         {
-            if (!info.obj->mat->emissive)
+            if (!m->emissive)
             {
-                glm::vec3 wi = sampleHemisphere(info.normal);
+                float cos_inv_pdf;
+                glm::vec3 wi = m->sampleInHemisphere(-ray.dir, info.normal, cos_inv_pdf);
                 Ray r(info.pos + info.normal * EPSILON, wi);
-                indirLight = shade(scene, r, depth + 1) * info.obj->mat->fr(wi, -ray.dir, info.normal) * glm::dot(info.normal, wi) * 2.f * PI;
+                indirLight = shade(scene, r, depth + 1) * m->fr(wi, -ray.dir, info.normal) * cos_inv_pdf;
             }
         }
     }

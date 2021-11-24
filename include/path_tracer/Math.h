@@ -6,7 +6,8 @@
 #include <glm/glm.hpp>
 
 #define PI 3.14159265359f
-#define EPSILON 1e-5f
+#define INV_PI 0.3183098861838f
+#define EPSILON 1e-4f
 #define ISZERO(x) (std::fabs(x) < EPSILON)
 #define CLAMP(x, floor, ceil) std::min((std::max((x), (floor))), (ceil))
 #define ERR_COLOR glm::vec3(1.f, 0.f, 1.f)

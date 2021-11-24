@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 project(path-tracing)
-set(CMAKE_CXX_FLAGS "-std=c++17 -pthread")
+set(CMAKE_CXX_FLAGS "-std=c++17 -pthread -O2")
 add_compile_options(-Wall)
 include_directories(./include)
 

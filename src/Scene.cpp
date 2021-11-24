@@ -8,7 +8,7 @@ Scene::Scene()
     : fromFile(false)
 {
     envLight = [](const glm::vec3 &dir) -> glm::vec3
-    { return glm::vec3(0.f, 0.f, 0.f); };
+    { return glm::vec3(0.5f, 0.5f, 0.5f); };
 }
 
 void Scene::init()
@@ -108,12 +108,12 @@ bool Scene::loadScene(const std::string &filename)
                 {
                     matList.push_back(new DiffuseMat(arr2vec3(mat["albedo"])));
                 }
-                else if (mat["type"].str == "pbr")
+                else if (mat["type"].str == "pbr_ggx")
                 {
-                    matList.push_back(new PBRMat(arr2vec3(mat["fresnel"]),
-                                                 arr2vec3(mat["albedo"]),
-                                                 mat["roughness"].num,
-                                                 mat["metallic"].num));
+                    matList.push_back(new PBRMat_GGX(arr2vec3(mat["fresnel"]),
+                                                     arr2vec3(mat["albedo"]),
+                                                     mat["roughness"].num,
+                                                     mat["metallic"].num));
                 }
             }
         }

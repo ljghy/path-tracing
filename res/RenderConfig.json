@@ -1,7 +1,7 @@
 {
-    "width": 1080,
-    "height": 720,
-    "SSP": 32,
+    "width": 640,
+    "height": 480,
+    "SSP": 512,
     "camera": {
         "pos": [
             4,
@@ -22,7 +22,7 @@
     },
     "shader": {
         "type": "path_tracing",
-        "max_depth": 4
+        "max_depth": 6
     },
     "output": {
         "path": "result.png",

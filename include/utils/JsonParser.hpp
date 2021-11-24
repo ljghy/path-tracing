@@ -79,9 +79,9 @@ public:
         switch (err)
         {
         case VST_NODE_TYPE_ERROR:
-            return "Node type error"; // + additional).c_str();
+            return "Node type error";
         case VST_KEY_NOT_FOUND:
-            return "Key not found"; //).c_str();
+            return "Key not found";
         }
         return "";
     }
@@ -321,7 +321,7 @@ public:
     static void PrintErrMsg(JsonParseErr &err)
     {
         if (err.state != PARSE_SUCCESS)
-            printf("Error %d: %s at position %d\n", (int)err.state,
+            printf("Json Parse Error %d: %s at position %d\n", (int)err.state,
                    JsonErrMsg[err.state], (int)err.pos);
     }
 

@@ -105,15 +105,15 @@ bool Renderer::loadConfig(const std::string &filename)
         auto &shd = data["shader"];
         if (shd["type"].str == "path_tracing")
         {
-            if (shd.findKey("maxDepth"))
-                shader = new PathTracingShader(shd["maxDepth"].toInt());
+            if (shd.findKey("max_depth"))
+                shader = new PathTracingShader(shd["max_depth"].toInt());
             else
                 shader = new PathTracingShader;
         }
         else if (shd["type"].str == "mirror")
         {
             if (shd.findKey("maxDepth"))
-                shader = new MirrorShader(shd["maxDepth"].toInt());
+                shader = new MirrorShader(shd["max_depth"].toInt());
             else
                 shader = new MirrorShader;
         }

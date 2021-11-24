@@ -35,8 +35,11 @@ Bitmap::Bitmap(const std::string &filename, int channels, bool degamma)
 	}
 	else
 	{
+		float table[256];
+		for (uint16_t i = 0; i < 256; ++i)
+			table[i] = i / 255.f;
 		for (size_t i = 0; i < s; ++i)
-			m_buffer[i] = buf[i] / 255.f;
+			m_buffer[i] = table[buf[i]];
 	}
 	stbi_image_free(buf);
 }
