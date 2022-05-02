@@ -1,46 +1,69 @@
 #include "path_tracer/Renderer.h"
 #include "path_tracer/Scene.h"
-
 #include <iostream>
 #include <string>
 
+class Application
+{
+public:
+    void run(int argc, char *argv[])
+    {
+        loadRes(argc, argv);
+        render();
+        output();
+    }
+
+private:
+    Scene scene;
+    Renderer renderer;
+
+    void loadRes(int argc, char *argv[])
+    {
+        std::string scenePath, rendererPath;
+        if (argc == 1)
+        {
+            std::cout << "Input scene file path: \n";
+            std::cin >> scenePath;
+            ++argc;
+        }
+        else
+            scenePath = argv[1];
+        if (argc == 2)
+        {
+            std::cout << "Input renderer file path: \n";
+            std::cin >> rendererPath;
+        }
+        else
+            rendererPath = argv[2];
+
+        printf("Loading scene...\n");
+        scene.loadScene(scenePath);
+        printf("Loading render configuration...\n");
+        renderer.loadConfig(rendererPath);
+    }
+
+    void render()
+    {
+        renderer.render(&scene);
+    }
+
+    void output()
+    {
+        renderer.outputPNG();
+    }
+};
+
 int main(int argc, char *argv[])
 {
-    std::string scenePath, rendererPath;
-    if (argc == 1)
+    try
     {
-        std::cout << "Input scene file path: \n";
-        std::cin >> scenePath;
-        ++argc;
+        Application app;
+        app.run(argc, argv);
     }
-    else
-        scenePath = argv[1];
-    if (argc == 2)
+    catch (const std::exception &e)
     {
-        std::cout << "Input renderer file path: \n";
-        std::cin >> rendererPath;
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
     }
-    else
-        rendererPath = argv[2];
-
-    printf("Loading scene...\n");
-    Scene scene;
-    if (!scene.loadScene(scenePath))
-    {
-        printf("Failed to load scene.\n");
-        return 0;
-    }
-
-    printf("Loading render configuration...\n");
-    Renderer renderer;
-    if (!renderer.loadConfig(rendererPath))
-    {
-        printf("Failed to load render configuration.\n");
-        return 0;
-    }
-
-    renderer.render(&scene);
-    renderer.outputPNG();
-
-    return 0;
+    return EXIT_SUCCESS;
 }

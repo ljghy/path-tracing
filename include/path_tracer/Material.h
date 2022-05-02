@@ -8,14 +8,16 @@ public:
     bool emissive;
     glm::vec3 emission;
 
+    virtual bool isStdBRDF() { return true; }
+
     Material(bool _emissive = false, const glm::vec3 &_emission = glm::vec3(0.f, 0.f, 0.f))
         : emissive(_emissive), emission(_emission) {}
 
     virtual glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const = 0;
-    virtual glm::vec3 sampleInHemisphere(const glm::vec3 & wi, const glm::vec3 &n, float &cos_inv_pdf)
+    virtual glm::vec3 sample(const glm::vec3 &wi, const glm::vec3 &n, float &cos_inv_pdf) // cosine weighted
     {
-        float cos_theta = randf(), phi = 2 * PI * randf(), sin_theta = sqrt(1.f - cos_theta * cos_theta);
-        cos_inv_pdf = cos_theta * 2.f * PI;
+        float cos_theta = sqrt(1.f - randf()), phi = 2.f * PI * randf(), sin_theta = sqrt(1.f - cos_theta * cos_theta);
+        cos_inv_pdf = PI;
         glm::vec3 v(sin_theta * cos(phi), sin_theta * sin(phi), cos_theta);
         float t = n.z - 1.f;
         if (ISZERO(t))

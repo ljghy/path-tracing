@@ -7,6 +7,6 @@ class Shader
 {
 public:
     virtual ~Shader(){};
-    virtual glm::vec3 shade(Scene *scene, const Ray &ray, int depth) = 0;
+    virtual glm::vec3 shade(Scene *scene, Ray ray) = 0;
 };
 #endif

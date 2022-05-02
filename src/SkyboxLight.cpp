@@ -21,7 +21,7 @@ SkyboxLight::SkyboxLight(const std::vector<std::string> &paths)
 {
     assert(paths.size() == 6);
     for (int i = 0; i < 6; ++i)
-        faces[i] = std::make_shared<Bitmap>(paths[i], 3, true);
+        faces[i] = std::make_shared<Bitmap>(paths[i], true);
 }
 
 SkyboxLight::~SkyboxLight() {}

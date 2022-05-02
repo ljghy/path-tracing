@@ -1,19 +1,24 @@
 #ifndef JSON_PARSER_HPP
 #define JSON_PARSER_HPP
 
-#include <errno.h>
-#include <math.h>
-#include <stdint.h>
-#include <stdio.h>
-
+#ifndef JSON_DISABLE_OUTPUT
 #include <iostream>
+#endif
+
+#include <cerrno>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+
+#include <variant>
+#include <utility>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <exception>
+#include <stdexcept>
 
-#define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
-#define ISDIGIT_NON_ZERO(c) ((c) >= '1' && (c) <= '9')
+#define _ISDIGIT(c) ((c) >= '0' && (c) <= '9')
+#define _ISDIGIT_NON_ZERO(c) ((c) >= '1' && (c) <= '9')
 
 enum JsonParseState
 {
@@ -57,127 +62,189 @@ struct JsonParseErr
 {
     size_t pos;
     JsonParseState state;
-};
 
-enum JsonNodeVisitExceptionType
-{
-    VST_NODE_TYPE_ERROR,
-    VST_KEY_NOT_FOUND
-};
-
-class JsonNodeVisitException : public std::exception
-{
-private:
-    JsonNodeVisitExceptionType err;
-    std::string additional;
-
-public:
-    JsonNodeVisitException(JsonNodeVisitExceptionType t, const std::string &a)
-        : err(t), additional(a) {}
-    virtual const char *what() const noexcept override
+    bool success() const
     {
-        switch (err)
-        {
-        case VST_NODE_TYPE_ERROR:
-            return "Node type error";
-        case VST_KEY_NOT_FOUND:
-            return "Key not found";
-        }
-        return "";
+        return state == PARSE_SUCCESS;
+    }
+
+    void print() const
+    {
+        if (state != PARSE_SUCCESS)
+            printf("Json Parse Error %d: %s at position %d\n", (int)state,
+                   JsonErrMsg[state], (int)pos);
     }
 };
 
-enum JsonValueType
+enum JsonNodeType
 {
-    NULL_TYPE,
-    BOOL_TYPE,
-    NUM_TYPE,
-    STR_TYPE,
-    ARR_TYPE,
-    OBJ_TYPE
+    JsonNullType = 0,
+    JsonBoolType,
+    JsonNumberType,
+    JsonStringType,
+    JsonArrayType,
+    JsonObjectType
 };
 
 struct JsonNode;
-typedef std::vector<JsonNode *> JsonArr;
-typedef std::unordered_multimap<std::string, JsonNode *> JsonObj;
+
+struct JsonNull
+{
+};
+
+using JsonBool = bool;
+
+#ifdef JSON_PARSER_USE_DOUBLE
+using JsonNum = double;
+#else
+using JsonNum = float;
+#endif
+
+using JsonStr = std::string;
+using JsonArr = std::vector<JsonNode *>;
+using JsonObj = std::unordered_multimap<JsonStr, JsonNode *>;
 
 struct JsonNode
 {
-    JsonValueType valueType;
-    union
-    {
-        float num;
-        bool boo;
-        std::string str;
-        JsonArr arr;
-        JsonObj obj;
-    };
+private:
+    std::variant<JsonNull, JsonBool, JsonNum, JsonStr, JsonArr, JsonObj> value;
 
-    JsonNode() : valueType(NULL_TYPE)
-    {
-    }
+    // No type check
+    inline JsonBool _getBool() const { return std::get<JsonBool>(value); }
+    inline JsonNum _getNum() const { return std::get<JsonNum>(value); }
+    inline const JsonStr &_getStr() const { return std::get<JsonStr>(value); }
+    inline const JsonArr &_getArr() const { return std::get<JsonArr>(value); }
+    inline const JsonObj &_getObj() const { return std::get<JsonObj>(value); }
 
-    void setType(JsonValueType t)
+    void free()
     {
-        valueType = t;
-        switch (t)
+        switch (value.index())
         {
-        case BOOL_TYPE:
-            new (&boo) bool;
+        case JsonArrayType:
+            for (auto &p : _getArr())
+                p->free();
+            std::get<JsonArr>(value).clear();
             break;
-        case NUM_TYPE:
-            new (&num) float;
+        case JsonObjectType:
+            for (auto &p : _getObj())
+                p.second->free();
+            std::get<JsonObj>(value).clear();
             break;
-        case STR_TYPE:
-            new (&str) std::string();
-            break;
-        case ARR_TYPE:
-            new (&arr) JsonArr;
-            break;
-        case OBJ_TYPE:
-            new (&obj) JsonObj;
-            break;
-        default:
-            return;
         }
     }
 
-    bool isNull() const { return valueType == NULL_TYPE; }
-    bool isBool() const { return valueType == BOOL_TYPE; }
-    bool isNum() const { return valueType == NUM_TYPE; }
-    bool isStr() const { return valueType == STR_TYPE; }
-    bool isArr() const { return valueType == ARR_TYPE; }
-    bool isObj() const { return valueType == OBJ_TYPE; }
+public:
+    friend class JsonParser;
+    JsonNode() = default;
 
-    int toInt() const
+    JsonNodeType getType() const
     {
-        if (valueType != NUM_TYPE)
-            throw JsonNodeVisitException(VST_NODE_TYPE_ERROR, ": Expect number type");
-        return int(num + 0.5);
+        return JsonNodeType(value.index());
     }
+
+    std::string getTypeStr() const
+    {
+        switch (value.index())
+        {
+        case JsonNullType:
+            return "null";
+        case JsonBoolType:
+            return "bool";
+        case JsonNumberType:
+            return "number";
+        case JsonStringType:
+            return "string";
+        case JsonArrayType:
+            return "array";
+        }
+        return "object";
+    }
+
+    // Do type check
+    JsonBool getBool() const
+    {
+        if (!isBool())
+            throw std::runtime_error("Json visit node type error: Expect bool type");
+        return std::get<JsonBool>(value);
+    }
+    JsonNum getNum() const
+    {
+        if (!isNum())
+            throw std::runtime_error("Json visit node type error: Expect number type");
+        return std::get<JsonNum>(value);
+    }
+    const JsonStr &getStr() const
+    {
+        if (!isStr())
+            throw std::runtime_error("Json visit node type error: Expect string type");
+        return std::get<JsonStr>(value);
+    }
+    const JsonArr &getArr() const
+    {
+        if (!isArr())
+            throw std::runtime_error("Json visit node type error: Expect array type");
+        return std::get<JsonArr>(value);
+    }
+    const JsonObj &getObj() const
+    {
+        if (!isObj())
+            throw std::runtime_error("Json visit node type error: Expect object type");
+        return std::get<JsonObj>(value);
+    }
+
+    inline bool isNull() const { return value.index() == 0; }
+    inline bool isBool() const { return value.index() == 1; }
+    inline bool isNum() const { return value.index() == 2; }
+    inline bool isStr() const { return value.index() == 3; }
+    inline bool isArr() const { return value.index() == 4; }
+    inline bool isObj() const { return value.index() == 5; }
+
+    inline int toInt() const { return int(getNum() + 0.5); }
 
     JsonNode(const JsonNode &) = delete;
     JsonNode &operator=(const JsonNode &) = delete;
 
-    std::string toString() const
+    JsonNode &operator=(JsonBool b)
     {
-        switch (valueType)
+        value.emplace<JsonBool>(b);
+        return *this;
+    }
+    JsonNode &operator=(JsonNum d)
+    {
+        value.emplace<JsonNum>(d);
+        return *this;
+    }
+    JsonNode &operator=(const JsonStr &s)
+    {
+        value.emplace<JsonStr>(s);
+        return *this;
+    }
+
+    bool operator==(JsonBool b) const { return getBool() == b; }
+    bool operator==(JsonNum d) const { return getNum() == d; }
+    bool operator==(int i) const { return toInt() == i; }
+    bool operator==(const JsonStr &s) const { return getStr() == s; }
+    bool operator==(const char *s) const { return getStr() == JsonStr(s); }
+
+    JsonStr toString() const
+    {
+        switch (value.index())
         {
-        case NULL_TYPE:
+        case JsonNullType:
             return "null";
-        case BOOL_TYPE:
-            return boo ? "true" : "false";
-        case NUM_TYPE:
-            return std::to_string(num);
-        case STR_TYPE:
-            return '\"' + str + '\"';
-        case ARR_TYPE:
+        case JsonBoolType:
+            return _getBool() ? "true" : "false";
+        case JsonNumberType:
+            return std::to_string(_getNum());
+        case JsonStringType:
+            return '\"' + _getStr() + '\"';
+        case JsonArrayType:
         {
-            std::string result("[");
-            for (auto it = arr.begin(); it != arr.end(); ++it)
+            JsonStr result("[");
+            for (auto it = _getArr().begin(); it != _getArr().end(); ++it)
             {
                 result += (*it)->toString();
-                if (it + 1 != arr.end())
+                if (it + 1 != _getArr().end())
                     result += ", ";
             }
             result += ']';
@@ -185,12 +252,12 @@ struct JsonNode
         }
         default:
         {
-            std::string result("{");
+            JsonStr result("{");
             size_t count = 0;
-            for (auto each : obj)
+            for (auto each : _getObj())
             {
                 result += '"' + each.first + "\": " + each.second->toString();
-                if (++count < obj.size())
+                if (++count < _getObj().size())
                     result += ", ";
             }
             return result += '}';
@@ -198,536 +265,511 @@ struct JsonNode
         }
     }
 
-    friend std::ostream &operator<<(std::ostream &os, JsonNode *node)
+#ifndef JSON_DISABLE_OUTPUT
+    friend std::ostream &operator<<(std::ostream &os, const JsonNode &node)
     {
-        if (node == nullptr)
-            return os;
-        switch (node->valueType)
-        {
-        case NULL_TYPE:
-            return os << "null";
-        case BOOL_TYPE:
-            if (node->boo)
-                os << "true";
-            else
-                os << "false";
-            return os;
-        case NUM_TYPE:
-            return os << node->num;
-        case STR_TYPE:
-            return os << '"' << node->str << '"';
-        case ARR_TYPE:
-            os << "[";
-            for (auto it = node->arr.begin(); it != node->arr.end(); ++it)
-            {
-                os << *it;
-                if (it + 1 != node->arr.end())
-                    os << ", ";
-            }
-            return os << "]";
-        default:
-            os << "{";
-            size_t count = 0;
-            for (auto each : node->obj)
-            {
-                os << '"' << each.first << "\": " << each.second;
-                if (++count < node->obj.size())
-                    os << ", ";
-            }
-            return os << "}";
-        }
+        return os << node.toString();
     }
+#endif
 
     JsonNode *deepCopy() const
     {
         JsonNode *result = new JsonNode;
-        result->setType(valueType);
-        switch (valueType)
+        switch (value.index())
         {
-        case NULL_TYPE:
+        case JsonNullType:
             return result;
-        case BOOL_TYPE:
-            result->boo = boo;
+        case JsonBoolType:
+            result->value.emplace<JsonBool>(_getBool());
             return result;
-        case NUM_TYPE:
-            result->num = num;
+        case JsonNumberType:
+            result->value.emplace<JsonNum>(_getNum());
             return result;
-        case STR_TYPE:
-            result->str = str;
+        case JsonStringType:
+            result->value.emplace<JsonStr>(_getStr());
             return result;
-        case ARR_TYPE:
-            for (auto &p : arr)
-                result->arr.push_back(p->deepCopy());
+        case JsonArrayType:
+        {
+            JsonArr tmp;
+            for (auto &p : _getArr())
+                tmp.push_back(p->deepCopy());
+            result->value.emplace<JsonArr>(std::move(tmp));
             return result;
+        }
         default:
-            for (auto &p : obj)
-                result->obj.insert(std::make_pair(p.first, p.second->deepCopy()));
+        {
+            JsonObj tmp;
+            for (auto &p : _getObj())
+                tmp.insert(std::make_pair(p.first, p.second->deepCopy()));
+            result->value.emplace<JsonObj>(std::move(tmp));
             return result;
+        }
         }
     }
 
-    bool findKey(const std::string &key) const
+    bool findKey(const JsonStr &key) const
     {
-        if (valueType != OBJ_TYPE)
-            return false;
-        return obj.find(key) != obj.end();
+        if (!isObj())
+            throw std::runtime_error("Json visit node type error: Expect object type");
+        return _getObj().find(key) != _getObj().end();
     }
-
-    JsonNode &operator[](size_t i) const
+    const JsonNode &operator[](size_t i) const
     {
-        if (valueType != ARR_TYPE)
-            throw JsonNodeVisitException(VST_NODE_TYPE_ERROR, ": Expect array type");
-        return *arr[i];
+        if (!isArr())
+            throw std::runtime_error("Json visit node type error: Expect array type");
+        return *(_getArr()[i]);
     }
-
-    JsonNode &operator[](const std::string &s) const
+    const JsonNode &operator[](const JsonStr &s) const
     {
-        if (valueType != OBJ_TYPE)
-            throw JsonNodeVisitException(VST_NODE_TYPE_ERROR, ": Expect object type");
-        auto it = obj.find(s);
-        if (it == obj.end())
-            throw JsonNodeVisitException(VST_KEY_NOT_FOUND, s);
+        if (!isObj())
+            throw std::runtime_error("Json visit node type error: Expect object type");
+        auto it = _getObj().find(s);
+        if (it == _getObj().end())
+            throw std::runtime_error("Json key not found");
         return *(it->second);
     }
 
-    ~JsonNode()
-    {
-        switch (valueType)
-        {
-        case STR_TYPE:
-            str.~basic_string();
-            break;
-        case ARR_TYPE:
-            arr.~vector();
-            break;
-        case OBJ_TYPE:
-            obj.~unordered_multimap();
-            break;
-        default:;
-        }
-    }
+    ~JsonNode() { free(); }
 };
 
 class JsonParser
 {
-public:
-    JsonNode *root;
-
 private:
-    size_t pos;
-    std::string buffer;
+    JsonNode *_root;
+    size_t _pos;
+    JsonStr _buffer;
 
 public:
-    static void PrintErrMsg(JsonParseErr &err)
-    {
-        if (err.state != PARSE_SUCCESS)
-            printf("Json Parse Error %d: %s at position %d\n", (int)err.state,
-                   JsonErrMsg[err.state], (int)err.pos);
-    }
-
-public:
-    JsonParser() : root(nullptr), pos(0), buffer("") {}
+    JsonParser() : _root(nullptr), _pos(0), _buffer("") {}
 
     JsonParser(const JsonParser &) = delete;
     JsonParser &operator=(const JsonParser &) = delete;
 
-    bool loadFromFile(const char *filename)
+    bool loadFromFile(const char *filename);
+    JsonParseErr parse(const JsonStr &buf = "");
+    const JsonNode &root() const
     {
-        FILE *fp;
-        if (!(fp = fopen(filename, "rt")))
-        {
-            printf("Failed to load from file: %s\n", filename);
-            return false;
-        }
-        char ch;
-        buffer.clear();
-        while (true)
-        {
-            fread(&ch, 1, 1, fp);
-            if (!feof(fp))
-                buffer.push_back(ch);
-            else
-                break;
-        }
-        fclose(fp);
-        return true;
+        if (_root == nullptr)
+            throw std::runtime_error("Visiting null pointer");
+        return *_root;
     }
 
-    JsonParseErr parse(const std::string &buf = "")
+    void clear()
     {
-        if (buf.size())
-            buffer = buf;
-        pos = 0;
-        parseSpace();
-        if (reachEnd())
-            return {0, PARSE_BUFFER_EMPTY};
-        release();
-        root = new JsonNode;
-        JsonParseErr err = parseValue(root);
-        if (err.state != PARSE_SUCCESS)
-            return err;
-        parseSpace();
-        if (!reachEnd())
-            return {pos, PARSE_ROOT_NOT_SINGLE_VALUE};
-        return {0, PARSE_SUCCESS};
+        delete _root;
+        _root = nullptr;
     }
 
-    void release()
-    {
-        delete root;
-        root = nullptr;
-    }
-
-    ~JsonParser() { release(); }
+    ~JsonParser() { clear(); }
 
 private:
-    bool reachEnd() { return (pos == buffer.size()); }
+    inline bool reachEnd() { return (_pos == _buffer.size()); }
 
-    JsonParseErr parseValue(JsonNode *node)
+    JsonParseErr parseValue(JsonNode *node);
+    JsonParseErr parseSpace();
+    JsonParseErr parseNull(JsonNode *node);
+    JsonParseErr parseBool(JsonNode *node);
+    JsonParseErr parseNumber(JsonNode *node);
+    JsonParseErr parseHex4(uint64_t &u);
+    JsonParseErr encodeUTF8(uint64_t u, JsonStr &s);
+    JsonParseErr parseString(JsonStr &s);
+    JsonParseErr parseArray(JsonNode *node);
+    JsonParseErr parseObject(JsonNode *node);
+};
+
+inline bool JsonParser::loadFromFile(const char *filename)
+{
+    FILE *fp;
+    if (!(fp = fopen(filename, "rt")))
     {
-        if (node == nullptr)
-            return {0, PARSE_NULL_PTR_ERROR};
-        parseSpace();
-        if (reachEnd())
-            return {0, PARSE_NO_VALUE_PARSED};
+        printf("Failed to load from file: %s\n", filename);
+        return false;
+    }
+    char ch;
+    _buffer.clear();
+    while (true)
+    {
+        fread(&ch, 1, 1, fp);
+        if (!feof(fp))
+            _buffer.push_back(ch);
+        else
+            break;
+    }
+    fclose(fp);
+    return true;
+}
 
+inline JsonParseErr JsonParser::parse(const JsonStr &buf)
+{
+    if (buf.size())
+        _buffer = buf;
+    _pos = 0;
+    parseSpace();
+    if (reachEnd())
+        return {0, PARSE_BUFFER_EMPTY};
+    clear();
+    _root = new JsonNode;
+    JsonParseErr err = parseValue(_root);
+    if (err.state != PARSE_SUCCESS)
+        return err;
+    parseSpace();
+    if (!reachEnd())
+        return {_pos, PARSE_ROOT_NOT_SINGLE_VALUE};
+    return {0, PARSE_SUCCESS};
+}
+
+inline JsonParseErr JsonParser::parseValue(JsonNode *node)
+{
+    if (node == nullptr)
+        return {0, PARSE_NULL_PTR_ERROR};
+    parseSpace();
+    if (reachEnd())
+        return {0, PARSE_NO_VALUE_PARSED};
+
+    JsonParseErr err;
+    switch (_buffer[_pos])
+    {
+    case 't':
+    case 'f':
+        err = parseBool(node);
+        break;
+    case 'n':
+        err = parseNull(node);
+        break;
+    case '"':
+    {
+        JsonStr tmp;
+        err = parseString(tmp);
+        node->value.emplace<JsonStr>(std::move(tmp));
+        break;
+    }
+    default:
+        err = parseNumber(node);
+        break;
+    case '[':
+        err = parseArray(node);
+        break;
+    case '{':
+        err = parseObject(node);
+        break;
+    }
+    if (err.state != PARSE_SUCCESS)
+        return err;
+    return {0, PARSE_SUCCESS};
+}
+
+inline JsonParseErr JsonParser::parseSpace()
+{
+    while (_buffer[_pos] == ' ' || _buffer[_pos] == '\t' ||
+           _buffer[_pos] == '\n' || _buffer[_pos] == '\r')
+        _pos++;
+    return {0, PARSE_SUCCESS};
+}
+
+inline JsonParseErr JsonParser::parseNull(JsonNode *node)
+{
+    if (node == nullptr)
+        return {0, PARSE_NULL_PTR_ERROR};
+    if (_buffer[_pos] == 'n' && _buffer[_pos + 1] == 'u' &&
+        _buffer[_pos + 2] == 'l' && _buffer[_pos + 3] == 'l')
+    {
+        _pos += 4;
+        node->value.emplace<JsonNull>(JsonNull());
+        return {0, PARSE_SUCCESS};
+    }
+    return {_pos, PARSE_INVALID_VALUE};
+}
+
+inline JsonParseErr JsonParser::parseBool(JsonNode *node)
+{
+    if (node == nullptr)
+        return {0, PARSE_NULL_PTR_ERROR};
+    if (_buffer[_pos] == 't' && _buffer[_pos + 1] == 'r' &&
+        _buffer[_pos + 2] == 'u' && _buffer[_pos + 3] == 'e')
+    {
+        _pos += 4;
+        *node = true;
+        return {0, PARSE_SUCCESS};
+    }
+    if (_buffer[_pos] == 'f' && _buffer[_pos + 1] == 'a' &&
+        _buffer[_pos + 2] == 'l' && _buffer[_pos + 3] == 's' &&
+        _buffer[_pos + 4] == 'e')
+    {
+        _pos += 5;
+        *node = false;
+        return {0, PARSE_SUCCESS};
+    }
+    return {_pos, PARSE_INVALID_VALUE};
+}
+
+inline JsonParseErr JsonParser::parseNumber(JsonNode *node)
+{
+    if (node == nullptr)
+        return {0, PARSE_NULL_PTR_ERROR};
+    size_t p = _pos;
+    if (_buffer[p] == '-' && !_ISDIGIT(_buffer[p + 1]))
+        return {_pos, PARSE_INVALID_VALUE};
+    p += (_buffer[p] == '-');
+    if (_buffer[p] == '0')
+        p++;
+    else
+    {
+        if (!_ISDIGIT_NON_ZERO(_buffer[p]))
+            return {_pos, PARSE_INVALID_VALUE};
+        while (_ISDIGIT(_buffer[p]))
+            p++;
+    }
+    if (_buffer[p] == '.')
+    {
+        p++;
+        if (!_ISDIGIT(_buffer[p]))
+            return {_pos, PARSE_INVALID_VALUE};
+        while (_ISDIGIT(_buffer[p]))
+            p++;
+    }
+    if (_buffer[p] == 'e' || _buffer[p] == 'E')
+    {
+        p++;
+        if (_buffer[p] == '+' || _buffer[p] == '-')
+            p++;
+        if (!_ISDIGIT(_buffer[p]))
+            return {_pos, PARSE_INVALID_VALUE};
+        while (_ISDIGIT(_buffer[p]))
+            p++;
+    }
+    errno = 0;
+    JsonNum num = (JsonNum)strtod((const char *)&_buffer[_pos], NULL);
+#ifdef JSON_PARSER_USE_DOUBLE
+    if (errno == ERANGE &&
+        (num == HUGE_VAL || num == -HUGE_VAL))
+        return {_pos, PARSE_NUMBER_TOO_BIG};
+#else
+    if (errno == ERANGE &&
+        (num == HUGE_VALF || num == -HUGE_VALF))
+        return {_pos, PARSE_NUMBER_TOO_BIG};
+#endif
+    *node = num;
+    _pos = p;
+    return {0, PARSE_SUCCESS};
+}
+
+inline JsonParseErr JsonParser::parseHex4(uint64_t &u)
+{
+    u = 0;
+    size_t _pos0 = _pos;
+    for (; _pos < _pos0 + 4; _pos++)
+    {
+        u <<= 4;
+        if (_buffer[_pos] >= '0' && _buffer[_pos] <= '9')
+            u |= _buffer[_pos] - '0';
+        else if (_buffer[_pos] >= 'A' && _buffer[_pos] <= 'F')
+            u |= _buffer[_pos] - 'A' + 10;
+        else if (_buffer[_pos] >= 'a' && _buffer[_pos] <= 'f')
+            u |= _buffer[_pos] - 'a' + 10;
+        else
+            return {_pos, PARSE_INVALID_UNICODE_HEX};
+    }
+    _pos--;
+    return {0, PARSE_SUCCESS};
+}
+
+inline JsonParseErr JsonParser::encodeUTF8(uint64_t u, JsonStr &s)
+{
+    if (u > 0x10FFFF)
+        return {_pos, PARSE_INVALID_UNICODE_HEX};
+    if (u <= 0x7F)
+        s.push_back(u & 0xFF);
+    else if (u <= 0x7FF)
+    {
+        s.push_back(0xC0 | ((u >> 6) & 0xFF));
+        s.push_back(0x80 | (u & 0x3F));
+    }
+    else if (u <= 0xFFFF)
+    {
+        s.push_back(0xE0 | ((u >> 12) & 0xFF));
+        s.push_back(0x80 | ((u >> 6) & 0x3F));
+        s.push_back(0x80 | (u & 0x3F));
+    }
+    else
+    {
+        s.push_back(0xF0 | ((u >> 18) & 0xFF));
+        s.push_back(0x80 | ((u >> 12) & 0x3F));
+        s.push_back(0x80 | ((u >> 6) & 0x3F));
+        s.push_back(0x80 | (u & 0x3F));
+    }
+    return {0, PARSE_SUCCESS};
+}
+
+inline JsonParseErr JsonParser::parseString(JsonStr &s)
+{
+    s.clear();
+    _pos++;
+    while (_buffer[_pos] != '\"')
+    {
+        uint64_t u, l;
         JsonParseErr err;
-        switch (buffer[pos])
+        switch (_buffer[_pos])
         {
-        case 't':
-        case 'f':
-            node->setType(BOOL_TYPE);
-            err = parseBool(node);
+        case '\\':
+            switch (_buffer[++_pos])
+            {
+            case '\"':
+            case '\\':
+            case '/':
+                s.push_back(_buffer[_pos]);
+                break;
+            case 'b':
+                s.push_back('\b');
+                break;
+            case 'f':
+                s.push_back('\f');
+                break;
+            case 'n':
+                s.push_back('\n');
+                break;
+            case 'r':
+                s.push_back('\r');
+                break;
+            case 't':
+                s.push_back('\t');
+                break;
+            case 'u':
+                _pos++;
+                err = parseHex4(u);
+                if (err.state != PARSE_SUCCESS)
+                    return err;
+                if (u >= 0xD800 && u <= 0xDBFF)
+                {
+                    if (_buffer[_pos + 1] != '\\' ||
+                        _buffer[_pos + 2] != 'u')
+                        return {_pos, PARSE_INVALID_UNICODE_SURROGATE};
+                    _pos += 2;
+                    err = parseHex4(l);
+                    if (err.state != PARSE_SUCCESS)
+                        return err;
+                    if (l < 0xDC00 || l > 0xDFFF)
+                        return {_pos, PARSE_INVALID_UNICODE_SURROGATE};
+                    u = (((u - 0xD800) << 10) | (l - 0xDC00)) +
+                        0x10000;
+                }
+                err = encodeUTF8(u, s);
+                if (err.state != PARSE_SUCCESS)
+                    return err;
+                break;
+            default:
+                return {_pos, PARSE_INVALID_STRING_ESCAPE};
+            }
             break;
-        case 'n':
-            node->setType(NULL_TYPE);
-            err = parseNull(node);
-            break;
-        case '"':
-            node->setType(STR_TYPE);
-            err = parseString(node->str);
-            break;
+
+        case '\0':
+            return {_pos, PARSE_MISS_QUATATION_MARK};
         default:
-            node->setType(NUM_TYPE);
-            err = parseNumber(node);
-            break;
-        case '[':
-            node->setType(ARR_TYPE);
-            err = parseArray(node);
-            break;
-        case '{':
-            node->setType(OBJ_TYPE);
-            err = parseObject(node);
-            break;
+            if ((unsigned char)_buffer[_pos] < 0x20)
+                return {_pos, PARSE_INVALID_STRING_CHAR};
+            s.push_back(_buffer[_pos]);
         }
+        _pos++;
+    }
+    _pos++;
+    return {0, PARSE_SUCCESS};
+}
+
+inline JsonParseErr JsonParser::parseArray(JsonNode *node)
+{
+    if (node == nullptr)
+        return {0, PARSE_NULL_PTR_ERROR};
+    _pos++;
+    parseSpace();
+    JsonArr tmp;
+    if (_buffer[_pos] == ']')
+    {
+        _pos++;
+        node->value.emplace<JsonArr>(std::move(tmp));
+        return {0, PARSE_SUCCESS};
+    }
+
+    while (true)
+    {
+        JsonNode *val = new JsonNode;
+        JsonParseErr err = parseValue(val);
+        if (err.state != PARSE_SUCCESS)
+        {
+            delete val;
+            return err;
+        }
+
+        tmp.push_back(val);
+        parseSpace();
+        if (_buffer[_pos] == ',')
+        {
+            _pos++;
+            parseSpace();
+        }
+        else if (_buffer[_pos] == ']')
+        {
+            _pos++;
+            node->value.emplace<JsonArr>(std::move(tmp));
+            return {0, PARSE_SUCCESS};
+        }
+        else
+            return {_pos, PARSE_MISS_COMMA_OR_SQUARE_BRACKET};
+    }
+}
+inline JsonParseErr JsonParser::parseObject(JsonNode *node)
+{
+    if (node == nullptr)
+        return {0, PARSE_NULL_PTR_ERROR};
+    _pos++;
+    parseSpace();
+    JsonObj tmp;
+    if (_buffer[_pos] == '}')
+    {
+        _pos++;
+        node->value.emplace<JsonObj>(tmp);
+        return {0, PARSE_SUCCESS};
+    }
+    JsonParseErr err;
+
+    while (true)
+    {
+        if (_buffer[_pos] != '"')
+            return {_pos, PARSE_KEY_VALUE_PAIR_MISS_KEY};
+        JsonStr key;
+        err = parseString(key);
         if (err.state != PARSE_SUCCESS)
             return err;
-        return {0, PARSE_SUCCESS};
-    }
-
-    JsonParseErr parseObject(JsonNode *node)
-    {
-        if (node == nullptr)
-            return {0, PARSE_NULL_PTR_ERROR};
-        pos++;
         parseSpace();
-        if (buffer[pos] == '}')
+        if (_buffer[_pos] == ':')
         {
-            pos++;
-            return {0, PARSE_SUCCESS};
-        }
-        JsonParseErr err;
-        while (true)
-        {
-            if (buffer[pos] != '"')
-                return {pos, PARSE_KEY_VALUE_PAIR_MISS_KEY};
-            std::string key;
-            err = parseString(key);
-            if (err.state != PARSE_SUCCESS)
-                return err;
+            _pos++;
             parseSpace();
-            if (buffer[pos] == ':')
-            {
-                pos++;
-                parseSpace();
-            }
-            else
-                return {pos, PARSE_KEY_VALUE_PAIR_MISS_VALUE};
-
-            JsonNode *val = new JsonNode;
-            err = parseValue(val);
-            if (err.state != PARSE_SUCCESS)
-            {
-                delete val;
-                return err;
-            }
-            node->obj.insert(std::pair<std::string, JsonNode *>(key, val));
-            parseSpace();
-            if (buffer[pos] == ',')
-            {
-                pos++;
-                parseSpace();
-            }
-            else if (buffer[pos] == '}')
-            {
-                pos++;
-                return {0, PARSE_SUCCESS};
-            }
-            else
-                return {pos, PARSE_MISS_COMMA_OR_CURLY_BRACKET};
-        }
-    }
-
-    JsonParseErr parseArray(JsonNode *node)
-    {
-        if (node == nullptr)
-            return {0, PARSE_NULL_PTR_ERROR};
-        pos++;
-        parseSpace();
-        if (buffer[pos] == ']')
-        {
-            pos++;
-            return {0, PARSE_SUCCESS};
-        }
-        while (true)
-        {
-            JsonNode *val = new JsonNode;
-            JsonParseErr err = parseValue(val);
-            if (err.state != PARSE_SUCCESS)
-            {
-                delete val;
-                return err;
-            }
-
-            node->arr.push_back(val);
-            parseSpace();
-            if (buffer[pos] == ',')
-            {
-                pos++;
-                parseSpace();
-            }
-            else if (buffer[pos] == ']')
-            {
-                pos++;
-                return {0, PARSE_SUCCESS};
-            }
-            else
-                return {pos, PARSE_MISS_COMMA_OR_SQUARE_BRACKET};
-        }
-    }
-
-    JsonParseErr parseNumber(JsonNode *node)
-    {
-        if (node == nullptr)
-            return {0, PARSE_NULL_PTR_ERROR};
-        size_t p = pos;
-        if (buffer[p] == '-' && !ISDIGIT(buffer[p + 1]))
-            return {pos, PARSE_INVALID_VALUE};
-        p += (buffer[p] == '-');
-        if (buffer[p] == '0')
-            p++;
-        else
-        {
-            if (!ISDIGIT_NON_ZERO(buffer[p]))
-                return {pos, PARSE_INVALID_VALUE};
-            while (ISDIGIT(buffer[p]))
-                p++;
-        }
-        if (buffer[p] == '.')
-        {
-            p++;
-            if (!ISDIGIT(buffer[p]))
-                return {pos, PARSE_INVALID_VALUE};
-            while (ISDIGIT(buffer[p]))
-                p++;
-        }
-        if (buffer[p] == 'e' || buffer[p] == 'E')
-        {
-            p++;
-            if (buffer[p] == '+' || buffer[p] == '-')
-                p++;
-            if (!ISDIGIT(buffer[p]))
-                return {pos, PARSE_INVALID_VALUE};
-            while (ISDIGIT(buffer[p]))
-                p++;
-        }
-        errno = 0;
-        node->num = strtod((const char *)&buffer[pos], NULL);
-        if (errno == ERANGE &&
-            (node->num == HUGE_VAL || node->num == -HUGE_VAL))
-            return {pos, PARSE_NUMBER_TOO_BIG};
-        node->valueType = NUM_TYPE;
-        pos = p;
-        return {0, PARSE_SUCCESS};
-    }
-
-    JsonParseErr parseHex4(uint64_t &u)
-    {
-        u = 0;
-        size_t pos0 = pos;
-        for (; pos < pos0 + 4; pos++)
-        {
-            u <<= 4;
-            if (buffer[pos] >= '0' && buffer[pos] <= '9')
-                u |= buffer[pos] - '0';
-            else if (buffer[pos] >= 'A' && buffer[pos] <= 'F')
-                u |= buffer[pos] - 'A' + 10;
-            else if (buffer[pos] >= 'a' && buffer[pos] <= 'f')
-                u |= buffer[pos] - 'a' + 10;
-            else
-                return {pos, PARSE_INVALID_UNICODE_HEX};
-        }
-        pos--;
-        return {0, PARSE_SUCCESS};
-    }
-
-    JsonParseErr encodeUTF8(uint64_t u, std::string &s)
-    {
-        if (u > 0x10FFFF)
-            return {pos, PARSE_INVALID_UNICODE_HEX};
-        if (u <= 0x7F)
-            s.push_back(u & 0xFF);
-        else if (u <= 0x7FF)
-        {
-            s.push_back(0xC0 | ((u >> 6) & 0xFF));
-            s.push_back(0x80 | (u & 0x3F));
-        }
-        else if (u <= 0xFFFF)
-        {
-            s.push_back(0xE0 | ((u >> 12) & 0xFF));
-            s.push_back(0x80 | ((u >> 6) & 0x3F));
-            s.push_back(0x80 | (u & 0x3F));
         }
         else
+            return {_pos, PARSE_KEY_VALUE_PAIR_MISS_VALUE};
+
+        JsonNode *val = new JsonNode;
+        err = parseValue(val);
+        if (err.state != PARSE_SUCCESS)
         {
-            s.push_back(0xF0 | ((u >> 18) & 0xFF));
-            s.push_back(0x80 | ((u >> 12) & 0x3F));
-            s.push_back(0x80 | ((u >> 6) & 0x3F));
-            s.push_back(0x80 | (u & 0x3F));
+            delete val;
+            return err;
         }
-        return {0, PARSE_SUCCESS};
-    }
-
-    JsonParseErr parseString(std::string &s)
-    {
-        s = std::string();
-        pos++;
-        while (buffer[pos] != '\"')
+        tmp.insert(std::pair<JsonStr, JsonNode *>(key, val));
+        parseSpace();
+        if (_buffer[_pos] == ',')
         {
-            uint64_t u, l;
-            JsonParseErr err;
-            switch (buffer[pos])
-            {
-            case '\\':
-                switch (buffer[++pos])
-                {
-                case '\"':
-                case '\\':
-                case '/':
-                    s.push_back(buffer[pos]);
-                    break;
-                case 'b':
-                    s.push_back('\b');
-                    break;
-                case 'f':
-                    s.push_back('\f');
-                    break;
-                case 'n':
-                    s.push_back('\n');
-                    break;
-                case 'r':
-                    s.push_back('\r');
-                    break;
-                case 't':
-                    s.push_back('\t');
-                    break;
-                case 'u':
-                    pos++;
-                    err = parseHex4(u);
-                    if (err.state != PARSE_SUCCESS)
-                        return err;
-                    if (u >= 0xD800 && u <= 0xDBFF)
-                    {
-                        if (buffer[pos + 1] != '\\' ||
-                            buffer[pos + 2] != 'u')
-                            return {pos, PARSE_INVALID_UNICODE_SURROGATE};
-                        pos += 2;
-                        err = parseHex4(l);
-                        if (err.state != PARSE_SUCCESS)
-                            return err;
-                        if (l < 0xDC00 || l > 0xDFFF)
-                            return {pos, PARSE_INVALID_UNICODE_SURROGATE};
-                        u = (((u - 0xD800) << 10) | (l - 0xDC00)) +
-                            0x10000;
-                    }
-                    err = encodeUTF8(u, s);
-                    if (err.state != PARSE_SUCCESS)
-                        return err;
-                    break;
-                default:
-                    return {pos, PARSE_INVALID_STRING_ESCAPE};
-                }
-                break;
-
-            case '\0':
-                return {pos, PARSE_MISS_QUATATION_MARK};
-            default:
-                if ((unsigned char)buffer[pos] < 0x20)
-                    return {pos, PARSE_INVALID_STRING_CHAR};
-                s.push_back(buffer[pos]);
-            }
-            pos++;
+            _pos++;
+            parseSpace();
         }
-        pos++;
-        return {0, PARSE_SUCCESS};
-    }
-
-    JsonParseErr parseSpace()
-    {
-        while (buffer[pos] == ' ' || buffer[pos] == '\t' ||
-               buffer[pos] == '\n' || buffer[pos] == '\r')
-            pos++;
-        return {0, PARSE_SUCCESS};
-    }
-
-    JsonParseErr parseBool(JsonNode *node)
-    {
-        if (node == nullptr)
-            return {0, PARSE_NULL_PTR_ERROR};
-        if (buffer[pos] == 't' && buffer[pos + 1] == 'r' &&
-            buffer[pos + 2] == 'u' && buffer[pos + 3] == 'e')
+        else if (_buffer[_pos] == '}')
         {
-            pos += 4;
-            node->valueType = BOOL_TYPE;
-            node->boo = true;
+            _pos++;
+            node->value.emplace<JsonObj>(tmp);
             return {0, PARSE_SUCCESS};
         }
-        if (buffer[pos] == 'f' && buffer[pos + 1] == 'a' &&
-            buffer[pos + 2] == 'l' && buffer[pos + 3] == 's' &&
-            buffer[pos + 4] == 'e')
-        {
-            pos += 5;
-            node->valueType = BOOL_TYPE;
-            node->boo = false;
-            return {0, PARSE_SUCCESS};
-        }
-        return {pos, PARSE_INVALID_VALUE};
+        else
+            return {_pos, PARSE_MISS_COMMA_OR_CURLY_BRACKET};
     }
-
-    JsonParseErr parseNull(JsonNode *node)
-    {
-        if (node == nullptr)
-            return {0, PARSE_NULL_PTR_ERROR};
-        if (buffer[pos] == 'n' && buffer[pos + 1] == 'u' &&
-            buffer[pos + 2] == 'l' && buffer[pos + 3] == 'l')
-        {
-            pos += 4;
-            node->valueType = NULL_TYPE;
-            node->boo = true;
-            return {0, PARSE_SUCCESS};
-        }
-        return {pos, PARSE_INVALID_VALUE};
-    }
-};
+}
 
 #endif // JSON_PARSER_HPP

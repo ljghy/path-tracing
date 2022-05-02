@@ -3,8 +3,8 @@
 #include "path_tracer/Ray.h"
 #include "path_tracer/Math.h"
 #include "path_tracer/Material.h"
-
-class Object;
+#include <memory>
+#include <cstdint>
 
 struct IntersectionInfo
 {
@@ -12,21 +12,22 @@ struct IntersectionInfo
     float t;
     glm::vec3 pos;
     glm::vec3 normal;
-    Object *obj;
+    std::shared_ptr<Material> mat;
+    bool frontFace = true;
+    uint32_t id;
 };
 
 class Object
 {
 public:
-    Object(Material *_mat = nullptr) : mat(_mat) {}
+    std::shared_ptr<Material> m_pMat;
+    bool invNorm;
 
-    Material *mat;
-
-    virtual float area() const { return 0.f; }
-    virtual glm::vec3 sample() const { return glm::vec3(0.f, 0.f, 0.f); }
-
+    Object(const std::shared_ptr<Material> _mat = nullptr, bool _invNorm = false) : m_pMat(_mat), invNorm(_invNorm) {}
     virtual ~Object(){};
-    virtual void rayIntersection(const Ray &r, IntersectionInfo &info) = 0;
+
+    void attachMat(std::shared_ptr<Material> _mat) { m_pMat = _mat; }
+    virtual void rayIntersection(const Ray &r, IntersectionInfo &info) const = 0;
 };
 
 #endif

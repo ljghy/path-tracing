@@ -6,37 +6,45 @@
 #include "path_tracer/Shader.h"
 #include <cstdint>
 #include <string>
+#include <memory>
 
 class Renderer
 {
 private:
-    Camera *camera;
-    Shader *shader;
-    uint16_t SSP;
-    Bitmap *renderResult;
+    std::shared_ptr<Camera> m_pCamera;
+    std::shared_ptr<Shader> m_pShader;
+    std::shared_ptr<Bitmap> m_pRenderResult;
+    uint16_t m_SSP;
 
-    std::string outputPath;
-    float scale;
-    bool gamma;
+    std::string m_outputPath;
+    float m_scale;
+    bool m_gamma;
+    bool m_bloomOn;
+    uint16_t m_bloomKer;
+    bool m_hdrOn;
+    float m_hdrExposure;
+    float m_bloomLuminanceThreshold;
 
-    bool fromFile;
+    void renderThread(Scene *scene, uint16_t offset, uint16_t step);
 
-    void free();
 public:
     Renderer()
-        : camera(nullptr),
-          shader(nullptr),
-          SSP(0),
-          renderResult(nullptr),
-          outputPath(""),
-          scale(1.f),
-          gamma(false),
-          fromFile(false) {}
-    Renderer(uint16_t w, uint16_t h, uint16_t _SSP, Camera *, Shader *, const std::string &, float = 1.f, bool = false);
-    ~Renderer();
+        : m_SSP(0u),
+          m_outputPath(""),
+          m_scale(1.f),
+          m_gamma(false),
+          m_bloomOn(false),
+          m_hdrOn(false) {}
+
     friend void renderThread(Renderer *renderer, Scene *scene, uint8_t id, uint16_t threadNum);
     void render(Scene *scene);
-    bool loadConfig(const std::string &);
+    void loadConfig(const std::string &);
+    std::shared_ptr<Bitmap> &renderResult() { return m_pRenderResult; }
+    const std::shared_ptr<Bitmap> renderResult() const { return m_pRenderResult; }
+    std::string outputPath() const { return m_outputPath; }
+    float scale() const { return m_scale; }
+    float gamma() const { return m_gamma; }
+
     void outputPNG();
 };
 #endif

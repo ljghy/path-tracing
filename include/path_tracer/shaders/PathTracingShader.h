@@ -6,10 +6,10 @@
 class PathTracingShader : public Shader
 {
 protected:
-    int maxDepth;
+    unsigned int maxDepth;
 
 public:
-    PathTracingShader(int n = 3) : maxDepth(n) {}
-    virtual glm::vec3 shade(Scene *scene, const Ray &ray, int depth) override;
+    PathTracingShader(unsigned int d = 6) : maxDepth(d) {}
+    virtual glm::vec3 shade(Scene *scene, Ray ray) override;
 };
 #endif

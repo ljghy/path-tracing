@@ -1,6 +1,7 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 #include "path_tracer/Object.h"
+
 class Sphere : public Object
 {
 protected:
@@ -8,7 +9,7 @@ protected:
     float m_radius;
 
 public:
-    Sphere(const glm::vec3 &_center, float _radius, Material *_mat = nullptr);
-    void rayIntersection(const Ray &r, IntersectionInfo &info);
+    Sphere(const glm::vec3 &_center, float _radius, const std::shared_ptr<Material> &_mat = nullptr, bool _invNorm = false);
+    void rayIntersection(const Ray &r, IntersectionInfo &info) const;
 };
 #endif

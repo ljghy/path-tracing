@@ -5,7 +5,7 @@
 class NormalShader : public Shader
 {
 public:
-    virtual glm::vec3 shade(Scene *scene, const Ray &ray, int depth) override
+    virtual glm::vec3 shade(Scene *scene, Ray ray) override
     {
         IntersectionInfo info;
         scene->rayIntersectionWithScene(ray, info);

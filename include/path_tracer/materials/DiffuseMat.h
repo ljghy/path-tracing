@@ -11,7 +11,7 @@ public:
     DiffuseMat(const glm::vec3 &a) : albedo(a) {}
     glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const
     {
-        return albedo / PI;
+        return albedo * INV_PI;
     }
 };
 #endif
