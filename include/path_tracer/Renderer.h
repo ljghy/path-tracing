@@ -14,7 +14,7 @@ private:
     std::shared_ptr<Camera> m_pCamera;
     std::shared_ptr<Shader> m_pShader;
     std::shared_ptr<Bitmap> m_pRenderResult;
-    uint16_t m_SSP;
+    uint16_t m_SPP;
 
     std::string m_outputPath;
     float m_scale;
@@ -29,7 +29,7 @@ private:
 
 public:
     Renderer()
-        : m_SSP(0u),
+        : m_SPP(0u),
           m_outputPath(""),
           m_scale(1.f),
           m_gamma(false),

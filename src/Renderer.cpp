@@ -21,10 +21,10 @@ void Renderer::renderThread(Scene *scene, uint16_t offset, uint16_t step)
         for (uint16_t col = 0; col < w; ++col)
         {
             m_pRenderResult->setPixel(row, col, glm::vec3(0.f, 0.f, 0.f));
-            for (uint16_t k = 0; k < m_SSP; ++k)
+            for (uint16_t k = 0; k < m_SPP; ++k)
             {
                 m_pCamera->generateRay(ray, (col + randf()) / w, (row + randf()) / h);
-                m_pRenderResult->addPixel(row, col, m_pShader->shade(scene, ray) / (float)m_SSP);
+                m_pRenderResult->addPixel(row, col, m_pShader->shade(scene, ray) / (float)m_SPP);
             }
         }
 
@@ -74,7 +74,7 @@ void Renderer::loadConfig(const std::string &filename)
         float ratio = (float)w / h;
 
         m_pRenderResult = std::make_shared<Bitmap>(w, h);
-        m_SSP = data["SSP"].toInt();
+        m_SPP = data["SPP"].toInt();
 
         auto &cam = data["camera"];
         m_pCamera = std::make_shared<Camera>(arr2vec3(cam["pos"]), arr2vec3(cam["dir"]),
