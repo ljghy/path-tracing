@@ -7,13 +7,6 @@
 #include <string>
 #include <memory>
 
-#define PX glm::vec3(1.f, 0.f, 0.f)
-#define NX glm::vec3(-1.f, 0.f, 0.f)
-#define PY glm::vec3(0.f, 1.f, 0.f)
-#define NY glm::vec3(0.f, -1.f, 0.f)
-#define PZ glm::vec3(0.f, 0.f, 1.f)
-#define NZ glm::vec3(0.f, 0.f, -1.f)
-
 class SkyboxLight : public EnvLight
 {
 protected:

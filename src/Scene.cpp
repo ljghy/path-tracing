@@ -128,7 +128,6 @@ void Scene::loadScene(const std::string &filename)
                 }
                 else
                     break;
-                bool invNorm;
                 if (obj.findKey("inv_norm"))
                 {
                     objList.back()->invNorm = obj["inv_norm"].getBool();

@@ -2,8 +2,8 @@
 #include <vector>
 glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
 {
-    IntersectionInfo info, preInfo;
-    Ray preRay;
+    IntersectionInfo info;
+    std::shared_ptr<Material> preMat;
     glm::vec3 result(0.f, 0.f, 0.f);
 
     std::vector<glm::vec3> dirLightStack, indirLightStack;
@@ -12,14 +12,12 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
 
     for (unsigned int d = 0; d < maxDepth; ++d)
     {
-        preInfo = info;
-        preRay = ray;
-
+        preMat = info.mat;
         scene->rayIntersectionWithScene(ray, info);
         if (info.happen)
         {
             glm::vec3 dirLight(0.f, 0.f, 0.f);
-            if (info.mat != nullptr && info.mat->isStdBRDF())
+            if (info.mat != nullptr && !info.mat->emissive && info.mat->isStdBRDF())
             {
                 for (auto &light : scene->lightList)
                 {
@@ -43,23 +41,29 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
             if (info.mat != nullptr)
             {
                 float cos_inv_pdf;
-                glm::vec3 wi = info.mat->sample(-ray.dir, info.normal, cos_inv_pdf);
-
                 if (!info.mat->emissive)
                 {
+                    glm::vec3 wi = info.mat->sample(-ray.dir, info.normal, cos_inv_pdf);
                     indirLightStack.push_back(info.mat->fr(wi, -ray.dir, info.normal) * cos_inv_pdf);
                     ray = Ray(info.pos + EPSILON * wi, wi);
                 }
                 else
                 {
-                    result = info.mat->emission * info.mat->fr(wi, -ray.dir, info.normal) * cos_inv_pdf;
+                    if (d == 0)
+                        return info.mat->emission;
+                    dirLightStack.back() += info.mat->emission;
+                    indirLightStack.push_back(glm::vec3(0.f));
                     break;
                 }
             }
             else // hit light
             {
-                if (d > 0 && preInfo.mat->isStdBRDF())
+                if (d > 0 && preMat->isStdBRDF())
+                {
+                    indirLightStack.push_back(glm::vec3(0.f));
                     break;
+                }
+
                 for (auto &light : scene->lightList)
                 {
                     if (light->getId() == info.id)
@@ -69,11 +73,10 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
                     }
                 }
                 if (d == 0)
-                    break;
+                    return result;
 
-                float cos_inv_pdf;
-                glm::vec3 wi = preInfo.mat->sample(-preRay.dir, preInfo.normal, cos_inv_pdf);
-                result = result * preInfo.mat->fr(wi, -preRay.dir, preInfo.normal) * cos_inv_pdf;
+                dirLightStack.back() += result;
+                indirLightStack.push_back(glm::vec3(0.f));
                 break;
             }
         }
@@ -83,7 +86,7 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
             break;
         }
     }
-    while (!indirLightStack.empty())
+    while (!dirLightStack.empty())
     {
         result = dirLightStack.back() + result * indirLightStack.back();
         dirLightStack.pop_back();

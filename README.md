@@ -35,4 +35,4 @@ make
 ../bin/path_tracer ../res/Scene.json ../res/RenderConfig.json
 ```
 
-![960x720, 2400ssp](https://github.com/ljghy/path-tracing/blob/master/results/result_960x720_2400ssp.png)
+![960x720, 800ssp](https://github.com/ljghy/path-tracing/blob/master/results/result_960x720_800ssp.png)
