@@ -1,5 +1,9 @@
 # Path tracer
 
+```
+git clone --recursive https://github.com/ljghy/path-tracing.git
+```
+
 ## Build and run
 
 ```
@@ -30,3 +34,5 @@ cmake -DCMAKE_BUILD_TYPE=[Debug|Release] ..
 make 
 ../bin/path_tracer ../res/Scene.json ../res/RenderConfig.json
 ```
+
+![960x720, 2400ssp](./results/result_960x720_2400ssp.png)

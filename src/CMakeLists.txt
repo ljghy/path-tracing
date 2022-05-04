@@ -20,6 +20,7 @@ target_include_directories(path_tracer
 PRIVATE 
     ${Threads_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include/3rdparty/glm
 )
 
 target_link_libraries(path_tracer
