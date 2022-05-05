@@ -23,6 +23,8 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
                 {
                     glm::vec3 wi = light->sample() - info.pos;
                     float d = glm::length(wi);
+                    if (ISZERO(d))
+                        return glm::vec3(0.f);
                     wi /= d;
 
                     Ray r(info.pos + EPSILON * wi, wi);
@@ -51,8 +53,8 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
                 {
                     if (d == 0)
                         return info.mat->emission;
-                    dirLightStack.back() += info.mat->emission;
-                    indirLightStack.push_back(glm::vec3(0.f));
+                    dirLightStack.pop_back();
+                    result = info.mat->emission;
                     break;
                 }
             }
@@ -75,8 +77,7 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
                 if (d == 0)
                     return result;
 
-                dirLightStack.back() += result;
-                indirLightStack.push_back(glm::vec3(0.f));
+                dirLightStack.pop_back();
                 break;
             }
         }
