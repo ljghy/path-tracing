@@ -183,25 +183,6 @@
                 8
             ],
             "center": [
-                0,
-                -0.5,
-                3
-            ],
-            "normal": [
-                0,
-                0,
-                -1
-            ],
-            "radius": 0.5
-        },
-        {
-            "type": "disk_light",
-            "emission": [
-                8,
-                12,
-                32
-            ],
-            "center": [
                 0.5,
                 2,
                 3
@@ -212,10 +193,35 @@
                 -1
             ],
             "radius": 0.5
+        },
+        {
+            "type": "rect_light",
+            "emission": [
+                8,
+                12,
+                32
+            ],
+            "center": [
+                0,
+                -0.5,
+                3
+            ],
+            "normal": [
+                0.5,
+                0,
+                -1
+            ],
+            "x_axis": [
+                1,
+                0,
+                0.5
+            ],
+            "a": 1.0,
+            "b": 1.0
         }
     ],
     "env_light": {
-        "type": "skybox",
+        "type": "pure_color",
         "path": [
             "../res/Skybox/front.jpg",
             "../res/Skybox/back.jpg",

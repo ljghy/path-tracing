@@ -12,6 +12,7 @@ PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/SkyboxLight.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Sphere.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/InfinitePlane.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Rectangle.cpp
 )
 
 find_package(Threads REQUIRED)

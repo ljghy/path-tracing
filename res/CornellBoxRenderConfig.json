@@ -1,24 +1,24 @@
 {
     "width": 640,
-    "height": 480,
+    "height": 640,
     "SPP": 32,
     "camera": {
         "pos": [
-            6,
-            0,
-            2.4
+            278,
+            278,
+            -800
         ],
         "dir": [
-            -1,
             0,
-            -0.3
-        ],
-        "up": [
-            -0.3,
             0,
             1
         ],
-        "fov": 60
+        "up": [
+            0,
+            1,
+            0
+        ],
+        "fov": 40
     },
     "shader": {
         "type": "path_tracing",
@@ -29,9 +29,9 @@
         "scale": 1.0,
         "gamma": true,
         "bloom": {
-            "kernel_size": 16,
+            "kernel_size": 0,
             "luminance_threshold": 1.5
         },
-        "hdr": 1.5
+        "hdr": -1
     }
 }

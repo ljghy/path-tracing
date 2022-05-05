@@ -106,6 +106,15 @@ void Scene::loadScene(const std::string &filename)
                                                                     arr2vec3(light["normal"]),
                                                                     light["radius"].getNum()));
                 }
+                else if (light["type"] == "rect_light")
+                {
+                    lightList.push_back(std::make_shared<RectLight>(arr2vec3(light["emission"]),
+                                                                    arr2vec3(light["center"]),
+                                                                    arr2vec3(light["normal"]),
+                                                                    arr2vec3(light["x_axis"]),
+                                                                    light["a"].getNum(),
+                                                                    light["b"].getNum()));
+                }
             }
         }
 
@@ -126,6 +135,23 @@ void Scene::loadScene(const std::string &filename)
                                                                       arr2vec3(obj["normal"]),
                                                                       matList[obj["mat_index"].toInt()]));
                 }
+                else if (obj["type"] == "rectangle")
+                {
+                    objList.push_back(std::make_shared<Rectangle>(arr2vec3(obj["center"]),
+                                                                  arr2vec3(obj["normal"]),
+                                                                  arr2vec3(obj["x_axis"]),
+                                                                  obj["a"].getNum(),
+                                                                  obj["b"].getNum(),
+                                                                  matList[obj["mat_index"].toInt()]));
+                }
+                else if (obj["type"] == "box")
+                {
+                    objList.push_back(std::make_shared<Box>(arr2vec3(obj["min"]),
+                                                            arr2vec3(obj["max"]),
+                                                            arr2vec3(obj["x_axis"]),
+                                                            arr2vec3(obj["y_axis"]),
+                                                            matList[obj["mat_index"].toInt()]));
+                }
                 else
                     break;
                 if (obj.findKey("inv_norm"))
@@ -144,6 +170,10 @@ void Scene::loadScene(const std::string &filename)
                 for (int i = 0; i < 6; ++i)
                     paths.push_back(env["path"][i].getStr());
                 envLight = SkyboxLight(paths);
+            }
+            else if (env["type"] == "pure_color")
+            {
+                envLight = PureColorEnvLight(arr2vec3(env["color"]));
             }
         }
     }

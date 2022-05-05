@@ -1,0 +1,229 @@
+{
+    "obj_list": [
+        {
+            "tag": "left",
+            "type": "rectangle",
+            "center": [
+                555,
+                277.5,
+                277.5
+            ],
+            "normal": [
+                -1,
+                0,
+                0
+            ],
+            "x_axis": [
+                0,
+                1,
+                0
+            ],
+            "a": 555,
+            "b": 555,
+            "mat_index": 0
+        },
+        {
+            "tag": "right",
+            "type": "rectangle",
+            "center": [
+                0,
+                277.5,
+                277.5
+            ],
+            "normal": [
+                1,
+                0,
+                0
+            ],
+            "x_axis": [
+                0,
+                1,
+                0
+            ],
+            "a": 555,
+            "b": 555,
+            "mat_index": 1
+        },
+        {
+            "tag": "bottom",
+            "type": "rectangle",
+            "center": [
+                277.5,
+                0,
+                277.5
+            ],
+            "normal": [
+                0,
+                1,
+                0
+            ],
+            "x_axis": [
+                1,
+                0,
+                0
+            ],
+            "a": 555,
+            "b": 555,
+            "mat_index": 2
+        },
+        {
+            "tag": "top",
+            "type": "rectangle",
+            "center": [
+                277.5,
+                555,
+                277.5
+            ],
+            "normal": [
+                0,
+                -1,
+                0
+            ],
+            "x_axis": [
+                1,
+                0,
+                0
+            ],
+            "a": 555,
+            "b": 555,
+            "mat_index": 2
+        },
+        {
+            "tag": "front",
+            "type": "rectangle",
+            "center": [
+                277.5,
+                277.5,
+                555
+            ],
+            "normal": [
+                0,
+                0,
+                -1
+            ],
+            "x_axis": [
+                1,
+                0,
+                0
+            ],
+            "a": 555,
+            "b": 555,
+            "mat_index": 2
+        },
+        {
+            "type": "box",
+            "min": [
+                130,
+                0,
+                65
+            ],
+            "max": [
+                295,
+                165,
+                230
+            ],
+            "x_axis": [
+                0.965926,
+                0,
+                0.258819
+            ],
+            "y_axis": [
+                0,
+                1,
+                0
+            ],
+            "mat_index": 2
+        },
+        {
+            "type": "box",
+            "min": [
+                265,
+                0,
+                295
+            ],
+            "max": [
+                430,
+                330,
+                460
+            ],
+            "x_axis": [
+                0.951057,
+                0,
+                -0.309017
+            ],
+            "y_axis": [
+                0,
+                1,
+                0
+            ],
+            "mat_index": 2
+        }
+    ],
+    "mat_list": [
+        {
+            "idx": 0,
+            "tag": "green",
+            "type": "diffuse",
+            "albedo": [
+                0.12,
+                0.45,
+                0.15
+            ]
+        },
+        {
+            "idx": 1,
+            "tag": "red",
+            "type": "diffuse",
+            "albedo": [
+                0.65,
+                0.05,
+                0.05
+            ]
+        },
+        {
+            "idx": 2,
+            "tag": "white",
+            "type": "diffuse",
+            "albedo": [
+                0.73,
+                0.73,
+                0.73
+            ]
+        }
+    ],
+    "light_list": [
+        {
+            "type": "rect_light",
+            "emission": [
+                15,
+                15,
+                15
+            ],
+            "center": [
+                278,
+                554,
+                279.5
+            ],
+            "normal": [
+                0,
+                -1,
+                0
+            ],
+            "x_axis": [
+                1,
+                0,
+                0
+            ],
+            "a": 130,
+            "b": 105
+        }
+    ],
+    "env_light": {
+        "type": "pure_color",
+        "color": [
+            0,
+            0,
+            0
+        ]
+    }
+}
