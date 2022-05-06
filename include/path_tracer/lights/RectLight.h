@@ -10,8 +10,8 @@ protected:
     glm::vec3 m_normal; // z axis
     glm::vec3 m_xAxis;
     glm::vec3 m_yAxis; // y = cross(z, x)
-    float m_a;         // x
-    float m_b;         // y
+    float m_a, m_ha;   // x
+    float m_b, m_hb;   // y
 
 public:
     RectLight(const glm::vec3 &e, const glm::vec3 &c, const glm::vec3 &n, const glm::vec3 &x, float a, float b)
@@ -20,11 +20,11 @@ public:
           m_normal(glm::normalize(n)),
           m_xAxis(glm::normalize(x - glm::dot(x, m_normal) * m_normal)),
           m_yAxis(glm::cross(m_normal, m_xAxis)),
-          m_a(a), m_b(b) {}
+          m_a(a), m_b(b), m_ha(0.5f * a), m_hb(0.5f * b) {}
 
     virtual glm::vec3 sample() const override
     {
-        float a = 0.5f * randf(-m_a, m_a), b = 0.5f * randf(-m_b, m_b);
+        float a = randf(-m_ha, m_ha), b = randf(-m_hb, m_hb);
         return a * m_xAxis + b * m_yAxis + m_center;
     }
 
@@ -37,20 +37,18 @@ public:
         float a = glm::dot(dir, m_normal);
         if (ISZERO(a))
             return;
-        float t = glm::dot(m_center - ori, m_normal) / a;
+        info.t = glm::dot(m_center - ori, m_normal) / a;
 
-        if (t > 0)
+        if (info.t > 0)
         {
-            info.pos = ori + t * dir;
+            info.pos = ori + info.t * dir;
             glm::vec3 p = info.pos - m_center;
-            float a = glm::dot(m_xAxis, p), b = glm::dot(m_yAxis, p);
-            if (fabs(a) < 0.5f * m_a && fabs(b) < 0.5f * m_b)
+            if (fabs(glm::dot(m_xAxis, p)) < m_ha && fabs(glm::dot(m_yAxis, p)) < m_hb)
             {
                 info.happen = true;
-                info.t = t;
                 info.normal = m_normal;
                 info.mat = nullptr;
-                info.frontFace = glm::dot(r.dir, info.normal) < 0;
+                // info.frontFace = glm::dot(r.dir, info.normal) < 0;
                 info.id = id;
             }
         }

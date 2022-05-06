@@ -6,11 +6,20 @@
 class Application
 {
 public:
-    void run(int argc, char *argv[])
+    int run(int argc, char *argv[])
     {
-        loadRes(argc, argv);
+        try
+        {
+            loadRes(argc, argv);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+            return EXIT_FAILURE;
+        }
         render();
         output();
+        return EXIT_SUCCESS;
     }
 
 private:
@@ -55,15 +64,6 @@ private:
 
 int main(int argc, char *argv[])
 {
-    try
-    {
-        Application app;
-        app.run(argc, argv);
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-        return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
+    Application app;
+    return app.run(argc, argv);
 }

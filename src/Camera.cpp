@@ -6,7 +6,7 @@ Camera::Camera(const glm::vec3 &_pos, const glm::vec3 &_dir, const glm::vec3 &_u
 Camera::Camera(const glm::vec3 &_pos, const glm::vec3 &_dir, float _hfov, float _ratio)
     : camPos(_pos), camDir(glm::normalize(_dir)), hFov(glm::radians(_hfov)), ratio(_ratio)
 {
-    float x(_dir.x), y(_dir.y), z(_dir.z), r(sqrt(x * x + y * y));
+    float x(_dir.x), y(_dir.y), z(_dir.z), r(glm::sqrt(x * x + y * y));
     if (ISZERO(r))
     {
         camUp = glm::vec3(1.0f, 0.0f, 0.0f);

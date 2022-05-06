@@ -144,7 +144,7 @@ void Bitmap::bloom(uint16_t kernelSize, float luminanceThreshold)
             float a = 0.f;
             for (int16_t i = std::clamp(w - kernelSize, 0, static_cast<int>(m_w) - 1); i <= std::clamp(w + kernelSize, 0, static_cast<int>(m_w) - 1); ++i)
             {
-                float weight = sqrt(0.5f * INV_PI * isigma2) * exp(-(i - w) * (i - w) * 0.5f * isigma2);
+                float weight = glm::sqrt(0.5f * INV_PI * isigma2) * exp(-(i - w) * (i - w) * 0.5f * isigma2);
                 weights += weight;
                 color += weight * bloomMap.getPixel(h, i);
                 a += weight * alpha[m_w * h + i];
@@ -161,7 +161,7 @@ void Bitmap::bloom(uint16_t kernelSize, float luminanceThreshold)
             float a = 0.f;
             for (int16_t i = std::clamp(h - kernelSize, 0, static_cast<int>(m_h) - 1); i <= std::clamp(h + kernelSize, 0, static_cast<int>(m_h) - 1); ++i)
             {
-                float weight = sqrt(0.5f * INV_PI * isigma2) * exp(-(i - h) * (i - h) * 0.5f * isigma2);
+                float weight = glm::sqrt(0.5f * INV_PI * isigma2) * exp(-(i - h) * (i - h) * 0.5f * isigma2);
                 weights += weight;
                 color += weight * tb.getPixel(i, w);
                 a += weight * ta[m_w * i + w];
@@ -202,7 +202,7 @@ void Bitmap::blur(uint16_t kernelSize)
             float a = 0.f;
             for (int16_t i = std::clamp(w - kernelSize, 0, static_cast<int>(m_w) - 1); i <= std::clamp(w + kernelSize, 0, static_cast<int>(m_w) - 1); ++i)
             {
-                float weight = sqrt(0.5f * INV_PI * isigma2) * exp(-(i - w) * (i - w) * 0.5f * isigma2);
+                float weight = glm::sqrt(0.5f * INV_PI * isigma2) * exp(-(i - w) * (i - w) * 0.5f * isigma2);
                 weights += weight;
                 color += weight * getPixel(h, i);
             }
@@ -217,7 +217,7 @@ void Bitmap::blur(uint16_t kernelSize)
             float a = 0.f;
             for (int16_t i = std::clamp(h - kernelSize, 0, static_cast<int>(m_h) - 1); i <= std::clamp(h + kernelSize, 0, static_cast<int>(m_h) - 1); ++i)
             {
-                float weight = sqrt(0.5f * INV_PI * isigma2) * exp(-(i - h) * (i - h) * 0.5f * isigma2);
+                float weight = glm::sqrt(0.5f * INV_PI * isigma2) * exp(-(i - h) * (i - h) * 0.5f * isigma2);
                 weights += weight;
                 color += weight * tb.getPixel(i, w);
             }

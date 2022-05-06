@@ -11,16 +11,15 @@ void InfinitePlane::rayIntersection(const Ray &r, IntersectionInfo &info) const
     float a = glm::dot(dir, m_normal);
     if (ISZERO(a))
         return;
-    float t = glm::dot(m_center - ori, m_normal) / a;
+    info.t = glm::dot(m_center - ori, m_normal) / a;
 
-    if (t > 0)
+    if (info.t > 0)
     {
         info.happen = true;
-        info.t = t;
-        info.pos = ori + t * dir;
-        info.normal = glm::normalize(invNorm ? -m_normal : m_normal);
+        info.pos = ori + info.t * dir;
+        info.normal = invNorm ? -m_normal : m_normal;
         info.mat = m_pMat;
-        info.frontFace = glm::dot(r.dir, info.normal) < 0;
+        // info.frontFace = glm::dot(r.dir, info.normal) < 0;
         return;
     }
 }

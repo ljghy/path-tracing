@@ -37,10 +37,9 @@ public:
             return 2.0f * ci * n - wi;
         }
 
-        co = sqrt(co);
+        co = glm::sqrt(co);
         if (ci > 0) // front face
         {
-
             return (-co + ci * eta) * n - eta * wi;
         }
         else

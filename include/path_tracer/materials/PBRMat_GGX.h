@@ -41,10 +41,10 @@ public:
             return Material::sample(wi, n, cos_inv_pdf);
 
         float phi = randf(0.f, 2.f * PI), y = randf(0.f, 0.999f), a2(sqr(sqr(roughness)));
-        float cos_theta = std::min(1.f, sqrt((1.f - y) / (1.f + (a2 - 1.f) * y)));
-        float sin_theta = sqrt(1.f - cos_theta * cos_theta);
+        float cos_theta = glm::min(1.f, glm::sqrt((1.f - y) / (1.f + (a2 - 1.f) * y)));
+        float sin_theta = glm::sqrt(1.f - cos_theta * cos_theta);
 
-        glm::vec3 v(sin_theta * cos(phi), sin_theta * sin(phi), cos_theta);
+        glm::vec3 v(sin_theta * glm::cos(phi), sin_theta * glm::sin(phi), cos_theta);
 
         glm::vec3 ez(0.0f, 0.0f, 1.0f), w(n - ez);
         if (!ISZERO(glm::length(w)))

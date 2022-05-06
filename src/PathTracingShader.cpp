@@ -33,8 +33,8 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
                     if (lightInfo.happen && lightInfo.mat == nullptr && lightInfo.id == light->getId())
                     {
                         dirLight += light->emission * info.mat->fr(wi, -ray.dir, info.normal) *
-                                    std::fabs(glm::dot(info.normal, wi)) *
-                                    std::max(0.f, glm::dot(lightInfo.normal, -wi)) * light->area / (d * d);
+                                    glm::abs(glm::dot(info.normal, wi)) *
+                                    glm::max(0.f, glm::dot(lightInfo.normal, -wi)) * light->area / (d * d);
                     }
                 }
             }
@@ -70,7 +70,7 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
                 {
                     if (light->getId() == info.id)
                     {
-                        result = light->emission * std::max(0.f, glm::dot(info.normal, -ray.dir));
+                        result = light->emission * glm::max(0.f, glm::dot(info.normal, -ray.dir));
                         break;
                     }
                 }

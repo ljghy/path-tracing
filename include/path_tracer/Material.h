@@ -16,9 +16,9 @@ public:
     virtual glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const = 0;
     virtual glm::vec3 sample(const glm::vec3 &wi, const glm::vec3 &n, float &cos_inv_pdf) // cosine weighted
     {
-        float cos_theta = sqrt(1.f - randf()), phi = 2.f * PI * randf(), sin_theta = sqrt(1.f - cos_theta * cos_theta);
+        float cos_theta = glm::sqrt(1.f - randf()), phi = 2.f * PI * randf(), sin_theta = glm::sqrt(1.f - cos_theta * cos_theta);
         cos_inv_pdf = PI;
-        glm::vec3 v(sin_theta * cos(phi), sin_theta * sin(phi), cos_theta);
+        glm::vec3 v(sin_theta * glm::cos(phi), sin_theta * glm::sin(phi), cos_theta);
         float t = n.z - 1.f;
         if (ISZERO(t))
             return v;

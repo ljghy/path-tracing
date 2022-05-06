@@ -14,27 +14,25 @@ void Sphere::rayIntersection(const Ray &r, IntersectionInfo &info) const
         info.happen = false;
         return;
     }
-    delta = sqrt(delta);
-    float t(p - delta);
-    if (t > 0)
+    delta = glm::sqrt(delta);
+    info.t = p - delta;
+    if (info.t > 0)
     {
         info.happen = true;
-        info.t = t;
-        info.pos = ori + t * dir;
-        info.normal = glm::normalize(invNorm ? m_center - info.pos : info.pos - m_center);
+        info.pos = ori + info.t * dir;
+        info.normal = (invNorm ? m_center - info.pos : info.pos - m_center) / m_radius;
         info.mat = m_pMat;
-        info.frontFace = glm::dot(r.dir, info.normal) < 0;
+        // info.frontFace = glm::dot(r.dir, info.normal) < 0;
         return;
     }
-    t = p + delta;
-    if (t > 0)
+    info.t = p + delta;
+    if (info.t > 0)
     {
         info.happen = true;
-        info.t = t;
-        info.pos = ori + t * dir;
-        info.normal = glm::normalize(invNorm ? m_center - info.pos : info.pos - m_center);
+        info.pos = ori + info.t * dir;
+        info.normal = (invNorm ? m_center - info.pos : info.pos - m_center) / m_radius;
         info.mat = m_pMat;
-        info.frontFace = glm::dot(r.dir, info.normal) < 0;
+        // info.frontFace = glm::dot(r.dir, info.normal) < 0;
         return;
     }
     info.happen = false;

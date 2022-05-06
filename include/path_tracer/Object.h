@@ -13,7 +13,7 @@ struct IntersectionInfo
     glm::vec3 pos;
     glm::vec3 normal;
     std::shared_ptr<Material> mat;
-    bool frontFace = true;
+    // bool frontFace = true;
     uint32_t id;
 };
 

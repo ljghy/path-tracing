@@ -25,8 +25,8 @@ public:
 
     virtual glm::vec3 sample() const override
     {
-        float r = sqrt(randf()) * m_radius, theta = randf(0.f, 2.f * PI);
-        return h * glm::vec3(r * cos(theta), r * sin(theta), 0.f) + m_center;
+        float r = glm::sqrt(randf()) * m_radius, theta = randf(0.f, 2.f * PI);
+        return h * glm::vec3(r * glm::cos(theta), r * glm::sin(theta), 0.f) + m_center;
     }
 
     virtual void rayIntersection(const Ray &r, IntersectionInfo &info) const
@@ -38,18 +38,17 @@ public:
         float a = glm::dot(dir, m_normal);
         if (ISZERO(a))
             return;
-        float t = glm::dot(m_center - ori, m_normal) / a;
+        info.t = glm::dot(m_center - ori, m_normal) / a;
 
-        if (t > 0)
+        if (info.t > 0)
         {
-            info.pos = ori + t * dir;
+            info.pos = ori + info.t * dir;
             if (glm::distance(info.pos, m_center) < m_radius)
             {
                 info.happen = true;
-                info.t = t;
                 info.normal = m_normal;
                 info.mat = nullptr;
-                info.frontFace = glm::dot(r.dir, info.normal) < 0;
+                // info.frontFace = glm::dot(r.dir, info.normal) < 0;
                 info.id = id;
             }
         }
