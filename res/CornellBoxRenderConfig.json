@@ -1,7 +1,7 @@
 {
     "width": 640,
     "height": 640,
-    "SPP": 32,
+    "SPP": 128,
     "camera": {
         "pos": [
             278,
@@ -29,9 +29,9 @@
         "scale": 1.0,
         "gamma": true,
         "bloom": {
-            "kernel_size": 0,
+            "kernel_size": 10,
             "luminance_threshold": 1.5
         },
-        "hdr": -1
+        "hdr": 1.5
     }
 }

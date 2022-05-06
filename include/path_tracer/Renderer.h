@@ -19,11 +19,16 @@ private:
     std::string m_outputPath;
     float m_scale;
     bool m_gamma;
+
     bool m_bloomOn;
     uint16_t m_bloomKer;
+    float m_bloomLuminanceThreshold;
+
     bool m_hdrOn;
     float m_hdrExposure;
-    float m_bloomLuminanceThreshold;
+
+    bool m_blurOn;
+    uint16_t m_blurKer;
 
     void renderThread(Scene *scene, uint16_t offset, uint16_t step);
 
@@ -34,7 +39,8 @@ public:
           m_scale(1.f),
           m_gamma(false),
           m_bloomOn(false),
-          m_hdrOn(false) {}
+          m_hdrOn(false),
+          m_blurOn(false) {}
 
     friend void renderThread(Renderer *renderer, Scene *scene, uint8_t id, uint16_t threadNum);
     void render(Scene *scene);

@@ -186,3 +186,41 @@ void Bitmap::hdr(float exposure)
     for (size_t i = 0; i < s; ++i)
         hdrMapping(m_buffer[i], exposure);
 }
+
+void Bitmap::blur(uint16_t kernelSize)
+{
+    Bitmap tb(m_w, m_h);
+    size_t s = m_w * m_h;
+
+    float isigma2 = sqr(3.f / kernelSize);
+
+    for (uint16_t w = 0; w < m_w; ++w)
+        for (uint16_t h = 0; h < m_h; ++h)
+        {
+            float weights = 0.f;
+            glm::vec3 color(0.f, 0.f, 0.f);
+            float a = 0.f;
+            for (int16_t i = std::clamp(w - kernelSize, 0, static_cast<int>(m_w) - 1); i <= std::clamp(w + kernelSize, 0, static_cast<int>(m_w) - 1); ++i)
+            {
+                float weight = sqrt(0.5f * INV_PI * isigma2) * exp(-(i - w) * (i - w) * 0.5f * isigma2);
+                weights += weight;
+                color += weight * getPixel(h, i);
+            }
+            tb.setPixel(h, w, color / weights);
+        }
+
+    for (uint16_t w = 0; w < m_w; ++w)
+        for (uint16_t h = 0; h < m_h; ++h)
+        {
+            float weights = 0.f;
+            glm::vec3 color(0.f, 0.f, 0.f);
+            float a = 0.f;
+            for (int16_t i = std::clamp(h - kernelSize, 0, static_cast<int>(m_h) - 1); i <= std::clamp(h + kernelSize, 0, static_cast<int>(m_h) - 1); ++i)
+            {
+                float weight = sqrt(0.5f * INV_PI * isigma2) * exp(-(i - h) * (i - h) * 0.5f * isigma2);
+                weights += weight;
+                color += weight * tb.getPixel(i, w);
+            }
+            setPixel(h, w, color / weights);
+        }
+}

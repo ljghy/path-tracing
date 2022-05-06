@@ -111,6 +111,11 @@ void Renderer::loadConfig(const std::string &filename)
             m_hdrExposure = out["hdr"].getNum();
             m_hdrOn = m_hdrExposure > 0.f;
         }
+        if (out.findKey("blur"))
+        {
+            m_blurKer = out["blur"].toInt();
+            m_blurOn = m_blurKer > 1;
+        }
     }
     catch (const std::exception &e)
     {
@@ -125,6 +130,8 @@ void Renderer::outputPNG()
         m_pRenderResult->bloom(m_bloomKer, m_bloomLuminanceThreshold);
     if (m_hdrOn)
         m_pRenderResult->hdr(m_hdrExposure);
+    if (m_blurOn)
+        m_pRenderResult->blur(m_blurKer);
     m_pRenderResult->outputPNG(m_outputPath, m_scale, m_gamma);
     printf("Render result saved to \"%s\".\n", m_outputPath.c_str());
 }

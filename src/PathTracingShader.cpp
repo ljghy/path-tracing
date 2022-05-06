@@ -62,7 +62,7 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
             {
                 if (d > 0 && preMat->isStdBRDF())
                 {
-                    indirLightStack.push_back(glm::vec3(0.f));
+                    dirLightStack.pop_back();
                     break;
                 }
 

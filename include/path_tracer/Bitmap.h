@@ -27,6 +27,7 @@ public:
 
     void bloom(uint16_t kernelSize, float luminanceThreshold);
     void hdr(float exposure = 1.f);
+    void blur(uint16_t kernelSize);
 
     static void hdrMapping(float &c, float exposure = 1.f) { c = 1.f - exp(-c * exposure); }
     static void hdrMapping(glm::vec3 &c, float exposure = 1.f) { c = glm::vec3(1.f) - glm::exp(-c * exposure); }
