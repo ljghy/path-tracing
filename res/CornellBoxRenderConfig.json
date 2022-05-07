@@ -1,7 +1,7 @@
 {
     "width": 640,
     "height": 640,
-    "SPP": 16,
+    "SPP": 32,
     "camera": {
         "pos": [
             278,

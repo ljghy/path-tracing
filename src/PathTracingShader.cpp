@@ -3,7 +3,7 @@
 glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
 {
     IntersectionInfo info;
-    std::shared_ptr<Material> preMat;
+    Material *preMat;
     glm::vec3 result(0.f, 0.f, 0.f);
 
     std::vector<glm::vec3> dirLightStack, indirLightStack;
@@ -30,7 +30,7 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
                     Ray r(info.pos + EPSILON * wi, wi);
                     IntersectionInfo lightInfo;
                     scene->rayIntersectionWithScene(r, lightInfo);
-                    if (lightInfo.happen && lightInfo.mat == nullptr && lightInfo.id == light->getId())
+                    if (lightInfo.happen && lightInfo.mat == nullptr && lightInfo.light == light)
                     {
                         dirLight += light->emission * info.mat->fr(wi, -ray.dir, info.normal) *
                                     glm::abs(glm::dot(info.normal, wi)) *
@@ -66,14 +66,7 @@ glm::vec3 PathTracingShader::shade(Scene *scene, Ray ray)
                     break;
                 }
 
-                for (auto &light : scene->lightList)
-                {
-                    if (light->getId() == info.id)
-                    {
-                        result = light->emission * glm::max(0.f, glm::dot(info.normal, -ray.dir));
-                        break;
-                    }
-                }
+                result = info.light->emission * glm::max(0.f, glm::dot(info.normal, -ray.dir));
                 if (d == 0)
                     return result;
 

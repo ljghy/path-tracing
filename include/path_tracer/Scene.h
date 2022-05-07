@@ -4,7 +4,6 @@
 #include <vector>
 #include <functional>
 #include <string>
-#include <memory>
 
 #include "path_tracer/Object.h"
 #include "path_tracer/Material.h"
@@ -12,11 +11,12 @@
 
 struct Scene
 {
-    Scene();
-    std::vector<std::shared_ptr<Object>> objList;
-    std::vector<std::shared_ptr<Light>> lightList;
-    std::vector<std::shared_ptr<Material>> matList;
+    std::vector<Object *> objList;
+    std::vector<Light *> lightList;
+    std::vector<Material *> matList;
 
+    Scene();
+    ~Scene();
     std::function<glm::vec3(const glm::vec3 &)> envLight;
     void rayIntersectionWithScene(const Ray &r, IntersectionInfo &info);
 

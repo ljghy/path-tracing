@@ -7,7 +7,7 @@
 class Box : public Object
 {
 protected:
-    std::shared_ptr<Rectangle> m_sides[6];
+    Rectangle m_sides[6];
     /*
     xy bottom
     xy top
@@ -19,7 +19,7 @@ protected:
 
 public:
     Box(const glm::vec3 &minCorner, const glm::vec3 &maxCorner, glm::vec3 xAxis, glm::vec3 yAxis,
-        const std::shared_ptr<Material> &_mat = nullptr, bool _invNorm = false)
+        Material *_mat = nullptr, bool _invNorm = false)
         : Object(_mat, _invNorm)
     {
         xAxis = glm::normalize(xAxis);
@@ -28,12 +28,12 @@ public:
         glm::vec3 l = maxCorner - minCorner;
         glm::vec3 h = 0.5f * l;
         glm::vec3 c = 0.5f * (maxCorner + minCorner);
-        m_sides[0] = std::make_shared<Rectangle>(c - h.z * zAxis, -zAxis, xAxis, l.x, l.y, _mat, _invNorm);
-        m_sides[1] = std::make_shared<Rectangle>(c + h.z * zAxis, zAxis, xAxis, l.x, l.y, _mat, _invNorm);
-        m_sides[2] = std::make_shared<Rectangle>(c - h.y * yAxis, -yAxis, xAxis, l.x, l.z, _mat, _invNorm);
-        m_sides[3] = std::make_shared<Rectangle>(c + h.y * yAxis, yAxis, xAxis, l.x, l.z, _mat, _invNorm);
-        m_sides[4] = std::make_shared<Rectangle>(c - h.x * xAxis, -xAxis, yAxis, l.y, l.z, _mat, _invNorm);
-        m_sides[5] = std::make_shared<Rectangle>(c + h.x * xAxis, xAxis, yAxis, l.y, l.z, _mat, _invNorm);
+        m_sides[0] = Rectangle(c - h.z * zAxis, -zAxis, xAxis, l.x, l.y, _mat, _invNorm);
+        m_sides[1] = Rectangle(c + h.z * zAxis, zAxis, xAxis, l.x, l.y, _mat, _invNorm);
+        m_sides[2] = Rectangle(c - h.y * yAxis, -yAxis, xAxis, l.x, l.z, _mat, _invNorm);
+        m_sides[3] = Rectangle(c + h.y * yAxis, yAxis, xAxis, l.x, l.z, _mat, _invNorm);
+        m_sides[4] = Rectangle(c - h.x * xAxis, -xAxis, yAxis, l.y, l.z, _mat, _invNorm);
+        m_sides[5] = Rectangle(c + h.x * xAxis, xAxis, yAxis, l.y, l.z, _mat, _invNorm);
     }
     void rayIntersection(const Ray &r, IntersectionInfo &info) const
     {
@@ -42,7 +42,7 @@ public:
         IntersectionInfo sideInfo;
         for (const auto &side : m_sides)
         {
-            side->rayIntersection(r, sideInfo);
+            side.rayIntersection(r, sideInfo);
             if (sideInfo.happen && sideInfo.t < info.t)
                 info = sideInfo;
         }

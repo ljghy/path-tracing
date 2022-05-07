@@ -28,7 +28,7 @@ public:
         return a * m_xAxis + b * m_yAxis + m_center;
     }
 
-    virtual void rayIntersection(const Ray &r, IntersectionInfo &info) const
+    virtual void rayIntersection(const Ray &r, IntersectionInfo &info) const override
     {
         const glm::vec3 &ori = r.origin;
         const glm::vec3 &dir = r.dir;
@@ -49,7 +49,7 @@ public:
                 info.normal = m_normal;
                 info.mat = nullptr;
                 // info.frontFace = glm::dot(r.dir, info.normal) < 0;
-                info.id = id;
+                info.light = this;
             }
         }
     }

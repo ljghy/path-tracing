@@ -13,7 +13,7 @@ public:
     virtual bool isStdBRDF() override { return false; }
 
     TransparentMat(float _ir = 1.3f, const glm::vec3 &a = glm::vec3(1.0f, 1.0f, 1.0f)) : ir(_ir), albedo(a) {}
-    glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const
+    glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const override
     {
         return albedo * INV_PI;
     }

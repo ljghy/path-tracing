@@ -16,7 +16,7 @@ public:
     PBRMat_GGX(const glm::vec3 &f, const glm::vec3 &a, float r, float m)
         : fresnel(f), albedo(a), roughness(r), metallic(m) {}
 
-    glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const
+    glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const override
     {
         glm::vec3 h = wi + wo;
         if (glm::dot(n, h) <= 0.f || ISZERO(glm::length(h)))

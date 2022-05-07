@@ -12,10 +12,21 @@ Scene::Scene()
     { return glm::vec3(1.f, 1.f, 1.f); };
 }
 
+Scene::~Scene()
+{
+    clear();
+}
+
 void Scene::clear()
 {
+    for (auto &pObj : objList)
+        delete pObj;
     objList.clear();
+    for (auto &pLight : lightList)
+        delete pLight;
     lightList.clear();
+    for (auto &pMat : matList)
+        delete pMat;
     matList.clear();
 }
 
@@ -66,23 +77,23 @@ void Scene::loadScene(const std::string &filename)
                 auto &mat = *p;
                 if (mat["type"] == "diffuse")
                 {
-                    matList.push_back(std::make_shared<DiffuseMat>(arr2vec3(mat["albedo"])));
+                    matList.push_back(new DiffuseMat(arr2vec3(mat["albedo"])));
                 }
                 else if (mat["type"] == "pbr_ggx")
                 {
-                    matList.push_back(std::make_shared<PBRMat_GGX>(arr2vec3(mat["fresnel"]),
-                                                                   arr2vec3(mat["albedo"]),
-                                                                   mat["roughness"].getNum(),
-                                                                   mat["metallic"].getNum()));
+                    matList.push_back(new PBRMat_GGX(arr2vec3(mat["fresnel"]),
+                                                     arr2vec3(mat["albedo"]),
+                                                     mat["roughness"].getNum(),
+                                                     mat["metallic"].getNum()));
                 }
                 else if (mat["type"] == "transparent")
                 {
-                    matList.push_back(std::make_shared<TransparentMat>(mat["refraction"].getNum(),
-                                                                       arr2vec3(mat["albedo"])));
+                    matList.push_back(new TransparentMat(mat["refraction"].getNum(),
+                                                         arr2vec3(mat["albedo"])));
                 }
                 else if (mat["type"] == "mirror")
                 {
-                    matList.push_back(std::make_shared<MirrorMat>(arr2vec3(mat["albedo"])));
+                    matList.push_back(new MirrorMat(arr2vec3(mat["albedo"])));
                 }
                 else
                     continue;
@@ -101,19 +112,19 @@ void Scene::loadScene(const std::string &filename)
                 auto &light = *l;
                 if (light["type"] == "disk_light")
                 {
-                    lightList.push_back(std::make_shared<DiskLight>(arr2vec3(light["emission"]),
-                                                                    arr2vec3(light["center"]),
-                                                                    arr2vec3(light["normal"]),
-                                                                    light["radius"].getNum()));
+                    lightList.push_back(new DiskLight(arr2vec3(light["emission"]),
+                                                      arr2vec3(light["center"]),
+                                                      arr2vec3(light["normal"]),
+                                                      light["radius"].getNum()));
                 }
                 else if (light["type"] == "rect_light")
                 {
-                    lightList.push_back(std::make_shared<RectLight>(arr2vec3(light["emission"]),
-                                                                    arr2vec3(light["center"]),
-                                                                    arr2vec3(light["normal"]),
-                                                                    arr2vec3(light["x_axis"]),
-                                                                    light["a"].getNum(),
-                                                                    light["b"].getNum()));
+                    lightList.push_back(new RectLight(arr2vec3(light["emission"]),
+                                                      arr2vec3(light["center"]),
+                                                      arr2vec3(light["normal"]),
+                                                      arr2vec3(light["x_axis"]),
+                                                      light["a"].getNum(),
+                                                      light["b"].getNum()));
                 }
             }
         }
@@ -125,32 +136,32 @@ void Scene::loadScene(const std::string &filename)
                 auto &obj = *p;
                 if (obj["type"] == "sphere")
                 {
-                    objList.push_back(std::make_shared<Sphere>(arr2vec3(obj["center"]),
-                                                               obj["radius"].getNum(),
-                                                               matList[obj["mat_index"].toInt()]));
+                    objList.push_back(new Sphere(arr2vec3(obj["center"]),
+                                                 obj["radius"].getNum(),
+                                                 matList[obj["mat_index"].toInt()]));
                 }
                 else if (obj["type"] == "infinite_plane")
                 {
-                    objList.push_back(std::make_shared<InfinitePlane>(arr2vec3(obj["center"]),
-                                                                      arr2vec3(obj["normal"]),
-                                                                      matList[obj["mat_index"].toInt()]));
+                    objList.push_back(new InfinitePlane(arr2vec3(obj["center"]),
+                                                        arr2vec3(obj["normal"]),
+                                                        matList[obj["mat_index"].toInt()]));
                 }
                 else if (obj["type"] == "rectangle")
                 {
-                    objList.push_back(std::make_shared<Rectangle>(arr2vec3(obj["center"]),
-                                                                  arr2vec3(obj["normal"]),
-                                                                  arr2vec3(obj["x_axis"]),
-                                                                  obj["a"].getNum(),
-                                                                  obj["b"].getNum(),
-                                                                  matList[obj["mat_index"].toInt()]));
+                    objList.push_back(new Rectangle(arr2vec3(obj["center"]),
+                                                    arr2vec3(obj["normal"]),
+                                                    arr2vec3(obj["x_axis"]),
+                                                    obj["a"].getNum(),
+                                                    obj["b"].getNum(),
+                                                    matList[obj["mat_index"].toInt()]));
                 }
                 else if (obj["type"] == "box")
                 {
-                    objList.push_back(std::make_shared<Box>(arr2vec3(obj["min"]),
-                                                            arr2vec3(obj["max"]),
-                                                            arr2vec3(obj["x_axis"]),
-                                                            arr2vec3(obj["y_axis"]),
-                                                            matList[obj["mat_index"].toInt()]));
+                    objList.push_back(new Box(arr2vec3(obj["min"]),
+                                              arr2vec3(obj["max"]),
+                                              arr2vec3(obj["x_axis"]),
+                                              arr2vec3(obj["y_axis"]),
+                                              matList[obj["mat_index"].toInt()]));
                 }
                 else
                     break;

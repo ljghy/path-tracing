@@ -12,7 +12,7 @@ public:
     virtual bool isStdBRDF() override { return false; }
 
     MirrorMat(const glm::vec3 &a = glm::vec3(1.0f, 1.0f, 1.0f)) : albedo(a) {}
-    glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const
+    glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const override
     {
         return albedo * INV_PI;
     }
