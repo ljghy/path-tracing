@@ -97,11 +97,6 @@ void Scene::loadScene(const std::string &filename)
                 }
                 else
                     continue;
-                if (mat.findKey("emissive") && mat["emissive"] == true)
-                {
-                    matList.back()->emissive = true;
-                    matList.back()->emission = arr2vec3(mat["emission"]);
-                }
             }
         }
 

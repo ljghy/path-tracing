@@ -73,16 +73,6 @@
                 0
             ],
             "radius": 1,
-            "mat_index": 6
-        },
-        {
-            "type": "sphere",
-            "center": [
-                0,
-                -3,
-                1
-            ],
-            "radius": 0.25,
             "mat_index": 5
         }
     ],
@@ -150,21 +140,6 @@
         },
         {
             "idx": 5,
-            "type": "diffuse",
-            "albedo": [
-                1,
-                1,
-                1
-            ],
-            "emissive": true,
-            "emission": [
-                30,
-                10,
-                10
-            ]
-        },
-        {
-            "idx": 6,
             "type": "transparent",
             "refraction": 1.5,
             "albedo": [

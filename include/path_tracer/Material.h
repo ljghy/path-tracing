@@ -5,13 +5,9 @@
 class Material
 {
 public:
-    bool emissive;
-    glm::vec3 emission;
-
     virtual bool isStdBRDF() { return true; }
 
-    Material(bool _emissive = false, const glm::vec3 &_emission = glm::vec3(0.f, 0.f, 0.f))
-        : emissive(_emissive), emission(_emission) {}
+    Material() {}
 
     virtual glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const = 0;
     virtual glm::vec3 sample(const glm::vec3 &wi, const glm::vec3 &n, float &cos_inv_pdf) // cosine weighted

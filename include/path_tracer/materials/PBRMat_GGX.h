@@ -16,23 +16,40 @@ public:
     PBRMat_GGX(const glm::vec3 &f, const glm::vec3 &a, float r, float m)
         : fresnel(f), albedo(a), roughness(r), metallic(m) {}
 
+    float D_GGX(float NoH, float a) const
+    {
+        float a2 = sqr(a);
+        float f = (NoH * a2 - NoH) * NoH + 1.f;
+        return a2 / (PI * f * f);
+    }
+
+    glm::vec3 F_Schlick(float u, const glm::vec3 &f0) const
+    {
+        return f0 + (glm::vec3(1.f) - f0) * glm::pow(1.f - u, 5.f);
+    }
+
+    float V_SmithGGXCorrelated(float NoV, float NoL, float a) const
+    {
+        float a2 = sqr(a);
+        float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
+        float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
+        return 0.5f / (GGXV + GGXL);
+    }
+
     glm::vec3 fr(const glm::vec3 &wi, const glm::vec3 &wo, const glm::vec3 &n) const override
     {
-        glm::vec3 h = wi + wo;
-        if (glm::dot(n, h) <= 0.f || ISZERO(glm::length(h)))
-            return glm::vec3(0.f);
-        h = glm::normalize(h);
-        glm::vec3 one(1.f, 1.f, 1.f);
+        glm::vec3 h = glm::normalize(wi + wo);
+        float NoL = glm::clamp(glm::dot(n, wi), 0.f, 1.f);
+        float NoV = glm::abs(glm::dot(n, wo)) + EPSILON;
+        float NoH = glm::clamp(glm::dot(n, h), 0.f, 1.f);
+        float LoH = glm::clamp(glm::dot(wi, h), 0.f, 1.f);
+        float a = sqr(roughness);
+
         glm::vec3 f0((1.f - metallic) * fresnel + metallic * albedo);
-        glm::vec3 f = f0 + (one - f0) * powf(1.f - std::min(glm::dot(wo, h), 1.f), 5.f);
-        float a(sqr(roughness)), a2(sqr(a));
-
-        float noh2 = std::min(sqr(glm::dot(n, h)), 1.f);
-        float d = INV_PI / sqr((1.f - noh2) / a + noh2 * a);
-
-        float k = sqr(roughness + 1.f) * 0.125f;
-        float g = 1.f / ((glm::dot(n, wi) * (1.f - k) + k) * (glm::dot(n, wo) * (1.f - k) + k));
-        return f * g * d * 0.25f + (one - f) * (1.f - metallic) * albedo * INV_PI;
+        glm::vec3 F = F_Schlick(LoH, f0);
+        float D = D_GGX(NoH, a);
+        float V = V_SmithGGXCorrelated(NoV, NoL, a);
+        return D * V * F + (glm::vec3(1.f) - F) * (1.f - metallic) * albedo * INV_PI;
     };
 
     virtual glm::vec3 sample(const glm::vec3 &wi, const glm::vec3 &n, float &cos_inv_pdf) override

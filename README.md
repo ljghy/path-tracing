@@ -35,5 +35,4 @@ make
 ../bin/path_tracer ../res/Scene.json ../res/RenderConfig.json
 ```
 
-![960x720, 800spp](https://github.com/ljghy/path-tracing/blob/master/results/result_960x720_800spp.png)
 ![640x640, 128spp](https://github.com/ljghy/path-tracing/blob/master/results/cornell_box_640x640_128spp.png)

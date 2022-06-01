@@ -33,19 +33,9 @@ public:
         float co = 1.0f - (1.0f - ci * ci) * eta * eta;
 
         if (co < 0.f || randf() < reflectance(fabs(ci), eta))
-        {
             return 2.0f * ci * n - wi;
-        }
 
-        co = glm::sqrt(co);
-        if (ci > 0) // front face
-        {
-            return (-co + ci * eta) * n - eta * wi;
-        }
-        else
-        {
-            return (co + ci * eta) * n - eta * wi;
-        }
+        return (-glm::sign(ci) * glm::sqrt(co) + ci * eta) * n - eta * wi;
     }
 };
 
